@@ -15,9 +15,9 @@ const camera2d = new THREE.OrthographicCamera(
     zoom * aspect,  //Oikea
     zoom,           //Ylä
     -zoom,          //Ala
-    0.1, 1000
+    1, 1000
 );
-camera2d.position.set(0,20,0); //Keskellä 1, koska muuten kamera ei ole yläpuolella pitää olla siis < 0, muut voi olla 0
+camera2d.position.set(0,50,0); //Keskellä 50, asettaa kameran gridin keskelle 100/2=50
 camera2d.lookAt(0,0,0);
 
 //TODO:
@@ -30,10 +30,18 @@ renderer.setClearColor(0x2F2F2F, 1);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const controls = new OrbitControls(camera3d, renderer.domElement);
-controls.target.set(0,0,0);
-controls.maxPolarAngle = Math.PI / 2.5;
-controls.update()
+const controls3D = new OrbitControls(camera3d, renderer.domElement);
+controls3D.target.set(0,0,0);
+controls3D.maxPolarAngle = Math.PI / 2.5;
+controls3D.update()
+
+//2D Kameran liikutus 
+//Vasen nappi pohjassa = liikutus
+//Rulla zoom
+//Oikea nappi kääntö estetty, siirtää vain objekteja
+const controls2D = new OrbitControls(camera2d, renderer.domElement);
+controls2D.enableRotate = false;
+controls2D.update()
 
 const buttonCamera = document.getElementById("buttonCamera");
 
@@ -58,9 +66,10 @@ buttonCamera.addEventListener("click", () => {
 
 //TODO: Säädettävä grid?
 //Kaksi erillistä gridiä, ensimmäinen koko alue tummemmat viivat ja toinen grid jakaa 4x4 alueisiin vaaleammilla viivoilla
-const grid = new THREE.GridHelper(20, 20, 0x666666, 0x666666);
+//100 x 100 m grid 1 ruutu = 1 metri
+const grid = new THREE.GridHelper(100, 100, 0x666666, 0x666666);
 scene.add( grid );
-const grid2 = new THREE.GridHelper(20, 4, 0xbbbbbb, 0xbbbbbb);
+const grid2 = new THREE.GridHelper(100, 20, 0xbbbbbb, 0xbbbbbb);
 scene.add( grid2 );
 
 //TODO:
@@ -101,19 +110,19 @@ setupDragEvents();
 //Objektien raahaus
 function setupDragEvents() {
     dragControls.addEventListener("dragstart", function(event) {
-        controls.enabled = false;
+        controls3D.enabled = false;
     });
 
     dragControls.addEventListener("drag", function(event) {
         event.object.position.y = 0;
         // Pidetään snapping, mutta huomaa että 2D:ssä tämä voi tuntua hyppivältä
         // jos kamera on liian kaukana
-        event.object.position.x = Math.round(event.object.position.x * 2) / 2;
-        event.object.position.z = Math.round(event.object.position.z * 2) / 2;
+        event.object.position.x = Math.round(event.object.position.x * 10) / 10;
+        event.object.position.z = Math.round(event.object.position.z * 10) / 10;
     });
 
     dragControls.addEventListener("dragend", function(event) {
-        controls.enabled = true;
+        controls3D.enabled = true;
     });
 }
 setupTurnEvents();
@@ -139,7 +148,9 @@ function setupTurnEvents() {
             if (intersects.length > 0) {
                 selectedObject = intersects[0].object; //Valitaan ensimmäinen osuva objekti (lähimpänä oleva)
                 isRotating = true;
-                controls.enabled = false;
+                //Lukitaan kameran liikutus käännön ajaksi
+                controls3D.enabled = false;
+                controls2D.enablePan = false;
             }
         }
     })
@@ -165,7 +176,8 @@ function setupTurnEvents() {
             }
 
             isRotating = false;
-            controls.enabled = true;
+            controls3D.enabled = true;
+            controls2D.enablePan = true;
             selectedObject = null;
         }
     })
@@ -176,7 +188,8 @@ function setupTurnEvents() {
 function animate() {
     requestAnimationFrame(animate);
 
-    controls.update()
+    controls3D.update()
+    controls2D.update()
     renderer.render( scene, activeCamera );
 }
 
