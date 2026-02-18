@@ -14,19 +14,33 @@
         padding: 10px 20px;
         cursor: pointer;
       }
-      #buttonPiirto {
+      .menu-item {
         position: absolute;
-        top: 60px;
         left: 20px;
         z-index: 100;
-        padding: 10px 20px;
-        cursor: pointer;
+        background: white;
+        padding: 5px;
+        border-radius: 4px;
       }
+
+      #piirto-wrap { top : 65px; }
+      #katselu-wrap { top: 100px; }
     </style>
   </head>
   <body>
+
     <button id="buttonCamera">Vaihda 2D</button>
-    <button id="buttonPiirto">Piirto</button>
+
+    <div id="piirto-wrap" class="menu-item">
+      <input type="radio" id="piirtotila" name="tila" value="piirtotila">
+      <label for="piirtotila">Piirto</label>
+    </div>
+
+    <div id="katselu-wrap" class="menu-item">
+      <input type="radio" id="katselutila" name="tila" value="katselutila" checked>
+      <label for="katselutila">Katselu</label>
+    </div>
+
     <script type="module" src="/main.js"></script>
   </body>
 </html>
