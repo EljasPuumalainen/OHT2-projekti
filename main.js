@@ -41,6 +41,7 @@ controls3D.update()
 //Oikea nappi kääntö estetty, siirtää vain objekteja
 const controls2D = new OrbitControls(camera2d, renderer.domElement);
 controls2D.enableRotate = false;
+controls2D.enabled = false;
 controls2D.update()
 
 const buttonCamera = document.getElementById("buttonCamera");
@@ -52,22 +53,28 @@ buttonCamera.addEventListener("click", () => {
     if (activeCamera === camera3d) {
         activeCamera = camera2d;
         buttonCamera.textContent = "Vaihda 3D";
+        
+        controls2D.enabled = true;
+        controls3D.enabled = false;
     } else {
         activeCamera = camera3d;
         buttonCamera.textContent = "Vaihda 2D";
+        controls2D.enabled = false;
+        controls3D.enabled = true;
     }
 
-    dragControls.dispose();
-
-    dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
+    if (dragControls) {
+        dragControls.dispose();
+    }
     
+    dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
     setupDragEvents();
+
+    const piirtoPaalla = document.getElementById("piirtotila").checked;
+    if (!piirtoPaalla) {
+        dragControls.enabled = false;
+    }
 })
-
-const buttonObjekti = document.getElementById("buttonObjekti");
-
-
-
 
 //TODO: Säädettävä grid?
 //Kaksi erillistä gridiä, ensimmäinen koko alue tummemmat viivat ja toinen grid jakaa 4x4 alueisiin vaaleammilla viivoilla
@@ -105,7 +112,7 @@ cube.position.y = 0;
 const cube2 = new THREE.Mesh( geometry, material );
 cube2.position.y = 0;
 const cube3 = new THREE.Mesh( geometry, material );
-cube2.position.y = 0;
+cube3.position.y = 0;
 
 scene.add( cube, cube2, cube3 );
 
@@ -116,6 +123,7 @@ setupDragEvents();
 //Objektien raahaus
 function setupDragEvents() {
     dragControls.addEventListener("dragstart", function(event) {
+        controls2D.enabled = false;
         controls3D.enabled = false;
     });
 
@@ -127,7 +135,8 @@ function setupDragEvents() {
     });
 
     dragControls.addEventListener("dragend", function(event) {
-        controls3D.enabled = true;
+        if (activeCamera === camera2d) controls2D.enabled = true;
+        else controls3D.enabled = true;
     });
 }
 setupTurnEvents();
@@ -188,10 +197,38 @@ function setupTurnEvents() {
     })
 }
 
+function paivitaTila() {
+    const piirtoRadio = document.getElementById("piirtotila");
+    const katseluRadio = document.getElementById("katselutila");
+
+    if (piirtoRadio.checked) {
+        dragControls.enabled = true;
+    }
+
+    if (katseluRadio.checked) {
+        dragControls.enabled = false;
+    }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    const piirto = document.getElementById("piirtotila");
+    const katselu = document.getElementById("katselutila");
+
+
+    if (piirto) piirto.addEventListener("change", paivitaTila);
+    if (katselu) katselu.addEventListener("change", paivitaTila);
+
+    if (katselu) katselu.checked = true;
+
+    paivitaTila();
+})
+
 //TODO: Seinien piirtäminen
 
 function animate() {
     requestAnimationFrame(animate);
+
+    if (dragControls) dragControls.camera = activeCamera;
 
     controls3D.update()
     controls2D.update()
