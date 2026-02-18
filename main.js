@@ -64,6 +64,11 @@ buttonCamera.addEventListener("click", () => {
     setupDragEvents();
 })
 
+const buttonObjekti = document.getElementById("buttonObjekti");
+
+
+
+
 //TODO: Säädettävä grid?
 //Kaksi erillistä gridiä, ensimmäinen koko alue tummemmat viivat ja toinen grid jakaa 4x4 alueisiin vaaleammilla viivoilla
 //100 x 100 m grid 1 ruutu = 1 metri
@@ -91,6 +96,7 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 10, 7.5);
 scene.add(directionalLight);
 
+//Seinän mitat 5m pitkä, 2.5m korkea, 0.2m leveä
 const geometry = new THREE.BoxGeometry( 5, 2.5, 0.2 );
 geometry.translate(0, 1.25, 0)
 const material = new THREE.MeshStandardMaterial( { color: 0xcccccc } );
@@ -115,8 +121,7 @@ function setupDragEvents() {
 
     dragControls.addEventListener("drag", function(event) {
         event.object.position.y = 0;
-        // Pidetään snapping, mutta huomaa että 2D:ssä tämä voi tuntua hyppivältä
-        // jos kamera on liian kaukana
+        //10 cm snapping
         event.object.position.x = Math.round(event.object.position.x * 10) / 10;
         event.object.position.z = Math.round(event.object.position.z * 10) / 10;
     });
