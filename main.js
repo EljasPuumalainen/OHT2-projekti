@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { DragControls } from 'three/addons/controls/DragControls.js';
-
+import { SceneNode } from 'three/webgpu';
 
 const scene = new THREE.Scene();
 const camera3d = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -44,6 +44,23 @@ controls2D.enableRotate = false;
 controls2D.enabled = false;
 controls2D.update()
 
+//Valot
+//Yleisvalo
+const ambientLight = new THREE.AmbientLight(0xffffff, 2)
+scene.add(ambientLight);
+//Suuntavalo luo 3D-efektin objektille
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(5, 10, 7.5);
+scene.add(directionalLight);
+
+//TODO: Säädettävä grid?
+//Kaksi erillistä gridiä, ensimmäinen koko alue tummemmat viivat ja toinen grid jakaa 4x4 alueisiin vaaleammilla viivoilla
+//100 x 100 m grid 1 ruutu = 1 metri
+const grid = new THREE.GridHelper(100, 100, 0x666666, 0x666666);
+scene.add( grid );
+const grid2 = new THREE.GridHelper(100, 20, 0xbbbbbb, 0xbbbbbb);
+scene.add( grid2 );
+
 const buttonCamera = document.getElementById("buttonCamera");
 
 let activeCamera = camera3d;
@@ -76,33 +93,6 @@ buttonCamera.addEventListener("click", () => {
     }
 })
 
-//TODO: Säädettävä grid?
-//Kaksi erillistä gridiä, ensimmäinen koko alue tummemmat viivat ja toinen grid jakaa 4x4 alueisiin vaaleammilla viivoilla
-//100 x 100 m grid 1 ruutu = 1 metri
-const grid = new THREE.GridHelper(100, 100, 0x666666, 0x666666);
-scene.add( grid );
-const grid2 = new THREE.GridHelper(100, 20, 0xbbbbbb, 0xbbbbbb);
-scene.add( grid2 );
-
-//TODO:
-//*Lattia, ehkä ihan turha???
-/*const planeGeo = new THREE.PlaneGeometry(20, 20);
-const planeMat = new THREE.MeshBasicMaterial({color: 0x2F2F2F, side: THREE.DoubleSide})
-const ground = new THREE.Mesh(planeGeo, planeMat);
-ground.rotation.x = -Math.PI / 2;
-ground.position.y = -0.01;
-scene.add(ground);
-*/
-
-//Valot
-//Yleisvalo
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-scene.add(ambientLight);
-//Suuntavalo luo 3D-efektin objektille
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(5, 10, 7.5);
-scene.add(directionalLight);
-
 //Lista objekteille, jota voi siirrellä
 const dragObjects = []
 
@@ -110,7 +100,7 @@ function lisaaSeina() {
     //Seinän mitat 5m pitkä, 2.5m korkea, 0.2m leveä
     const geometry = new THREE.BoxGeometry( 5, 2.5, 0.2 );
     geometry.translate(0, 1.25, 0)
-    const material = new THREE.MeshStandardMaterial( { color: 0xcccccc } );
+    const material = new THREE.MeshStandardMaterial( { color: 0xf0f0f0 } );
     const cube = new THREE.Mesh( geometry, material );
     cube.position.y = 0;
 
@@ -127,6 +117,79 @@ buttonPiirra.addEventListener("click", () => {
 
 let dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
 setupDragEvents();
+
+const planeGeo = new THREE.PlaneGeometry(100, 100);
+const planeMat = new THREE.MeshBasicMaterial({ visible: false })
+const drawingPlane = new THREE.Mesh(planeGeo, planeMat);
+drawingPlane.rotation.x = -Math.PI / 2;
+scene.add(drawingPlane);
+//TODO: Seinien piirtäminen
+
+let isDrawing = false;
+let currentWall = null;
+let startPoint = new THREE.Vector3();
+
+window.addEventListener("mousedown", (event) => {
+    if (!isDrawing || event.button !== 0)
+        return;
+
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    )
+
+    const raycaster = new THREE.Raycaster()
+    raycaster.setFromCamera(mouse, activeCamera);
+    const intersects = raycaster.intersectObject(drawingPlane)
+
+    if (intersects.length > 0) {
+        isDrawing = true;
+        startPoint.copy(intersects[0].point);
+
+        const geometry = new THREE.BoxGeometry(0.2, 2.5, 1);
+        geometry.translate(0, 1.25, 0.5);
+
+        const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 })
+        currentWall = new THREE.Mesh(geometry, material)
+
+        currentWall.position.copy(startPoint);
+        scene.add(currentWall);
+
+        controls2D.enabled = false;
+    }
+})
+
+window.addEventListener("mousemove", (event) => {
+    if (!isDrawing || !currentWall)
+        return;
+
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster()
+    raycaster.setFromCamera(mouse, activeCamera);
+    const intersects = raycaster.intersectObject(drawingPlane)
+
+    if (intersects.length > 0) {
+        const endPoint = intersects[0].point;
+        const distance = startPoint.distanceTo(endPoint);
+        const angle = Math.atan2(endPoint.x - startPoint.x, endPoint.z - startPoint.z);
+
+        currentWall.scale.z = distance;
+        currentWall.rotation.y = angle;
+    }
+})
+
+window.addEventListener("mouseup", (event) => {
+    if (event.button === 0 && isDrawing) {
+        if (currentWall) {
+            dragObjects.push(currentWall);
+            currentWall = null;
+        }
+    }
+})
 
 //Objektien raahaus
 function setupDragEvents() {
@@ -205,33 +268,61 @@ function setupTurnEvents() {
     })
 }
 
+function disableBtn() {
+    document.getElementById("buttonCamera").disabled = true;
+}
+
+function enableBtn() {
+    document.getElementById("buttonCamera").disabled = false;
+}
+
 function paivitaTila() {
     const siirtelyRadio = document.getElementById("siirtelytila");
     const katseluRadio = document.getElementById("katselutila");
+    const piirtoRadio = document.getElementById("piirtotila");
 
     if (siirtelyRadio.checked) {
         dragControls.enabled = true;
+        isDrawing = false;
+        enableBtn();
     }
 
     if (katseluRadio.checked) {
         dragControls.enabled = false;
+        isDrawing = false;
+        enableBtn();
+    }
+
+    if (piirtoRadio.checked) {
+        dragControls.enabled = false;
+        isDrawing = true;
+
+        if (activeCamera !== camera2d) {
+            activeCamera = camera2d;
+            buttonCamera.textContent = "Vaihda 3D";
+            disableBtn();
+            controls2D.enabled = true;
+            controls3D.enabled = false;
+
+            if (dragControls) dragControls.camera = activeCamera;
+        }
     }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
     const siirtely = document.getElementById("siirtelytila");
     const katselu = document.getElementById("katselutila");
+    const piirto = document.getElementById("piirtotila");
 
 
     if (siirtely) siirtely.addEventListener("change", paivitaTila);
     if (katselu) katselu.addEventListener("change", paivitaTila);
+    if (piirto) piirto.addEventListener("change", paivitaTila);
 
     if (katselu) katselu.checked = true;
 
     paivitaTila();
 })
-
-//TODO: Seinien piirtäminen
 
 function animate() {
     requestAnimationFrame(animate);
