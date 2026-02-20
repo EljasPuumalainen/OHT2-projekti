@@ -70,7 +70,6 @@ buttonCamera.addEventListener("click", () => {
     if (activeCamera === camera3d) {
         activeCamera = camera2d;
         buttonCamera.textContent = "Vaihda 3D";
-        
         controls2D.enabled = true;
         controls3D.enabled = false;
     } else {
@@ -290,28 +289,35 @@ function paivitaTila() {
     const piirtoRadio = document.getElementById("piirtotila");
 
     if (siirtelyRadio.checked) {
-        console.log("siirtelytila");
         dragControls.enabled = true;
         isDrawing = false;
         enableBtn();
     }
 
     if (katseluRadio.checked) {
-        console.log("katselutila");
         dragControls.enabled = false;
         isDrawing = false;
         enableBtn();
     }
 
     if (piirtoRadio.checked) {
-        console.log("piirtotila");
         dragControls.enabled = false;
         isDrawing = true;
         disableBtn();
 
+
         if (activeCamera !== camera2d) {
             activeCamera = camera2d;
             buttonCamera.textContent = "Vaihda 3D";
+            controls2D.enabled = false;
+            controls3D.enabled = false;
+
+            if (dragControls) {
+                dragControls.dispose();
+            }
+            
+            dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
+            setupDragEvents();
         }
     }
 }
@@ -328,6 +334,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (piirto) piirto.addEventListener("change", paivitaTila);
 
+    //Sivun latautuessa automaattisesti katselutilaan
     if (katselu) katselu.checked = true;
 
     paivitaTila();
