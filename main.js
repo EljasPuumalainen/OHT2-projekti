@@ -175,7 +175,11 @@ window.addEventListener("mousemove", (event) => {
     if (intersects.length > 0) {
         const endPoint = intersects[0].point;
         const distance = startPoint.distanceTo(endPoint);
-        const angle = Math.atan2(endPoint.x - startPoint.x, endPoint.z - startPoint.z);
+        let angle = Math.atan2(endPoint.x - startPoint.x, endPoint.z - startPoint.z);
+
+        //2.5 Asteen lukitus piirtäessä
+        const step = 2.5 * (Math.PI / 180);
+        angle = Math.round(angle / step) * step;
 
         currentWall.scale.z = distance;
         currentWall.rotation.y = angle;
