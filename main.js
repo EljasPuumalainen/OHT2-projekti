@@ -70,8 +70,8 @@ buttonCamera.addEventListener("click", () => {
     dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
     setupDragEvents();
 
-    const piirtoPaalla = document.getElementById("piirtotila").checked;
-    if (!piirtoPaalla) {
+    const siirtoPaalla = document.getElementById("siirtelytila").checked;
+    if (!siirtoPaalla) {
         dragControls.enabled = false;
     }
 })
@@ -103,20 +103,28 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 10, 7.5);
 scene.add(directionalLight);
 
-//Seinän mitat 5m pitkä, 2.5m korkea, 0.2m leveä
-const geometry = new THREE.BoxGeometry( 5, 2.5, 0.2 );
-geometry.translate(0, 1.25, 0)
-const material = new THREE.MeshStandardMaterial( { color: 0xcccccc } );
-const cube = new THREE.Mesh( geometry, material );
-cube.position.y = 0;
-const cube2 = new THREE.Mesh( geometry, material );
-cube2.position.y = 0;
-const cube3 = new THREE.Mesh( geometry, material );
-cube3.position.y = 0;
+//Lista objekteille, jota voi siirrellä
+const dragObjects = []
 
-scene.add( cube, cube2, cube3 );
+function lisaaSeina() {
+    //Seinän mitat 5m pitkä, 2.5m korkea, 0.2m leveä
+    const geometry = new THREE.BoxGeometry( 5, 2.5, 0.2 );
+    geometry.translate(0, 1.25, 0)
+    const material = new THREE.MeshStandardMaterial( { color: 0xcccccc } );
+    const cube = new THREE.Mesh( geometry, material );
+    cube.position.y = 0;
 
-const dragObjects = [cube, cube2, cube3]
+    //Lisätään luotu objekti listaan ja sceneen
+    dragObjects.push(cube);
+    scene.add( cube );
+}
+
+//Nappi lisää seiniä
+//Toimii vielä siten, että nappi lisää aina saman kokoisen seinän
+buttonPiirra.addEventListener("click", () => {
+    lisaaSeina()
+})
+
 let dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
 setupDragEvents();
 
@@ -198,10 +206,10 @@ function setupTurnEvents() {
 }
 
 function paivitaTila() {
-    const piirtoRadio = document.getElementById("piirtotila");
+    const siirtelyRadio = document.getElementById("siirtelytila");
     const katseluRadio = document.getElementById("katselutila");
 
-    if (piirtoRadio.checked) {
+    if (siirtelyRadio.checked) {
         dragControls.enabled = true;
     }
 
@@ -211,11 +219,11 @@ function paivitaTila() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-    const piirto = document.getElementById("piirtotila");
+    const siirtely = document.getElementById("siirtelytila");
     const katselu = document.getElementById("katselutila");
 
 
-    if (piirto) piirto.addEventListener("change", paivitaTila);
+    if (siirtely) siirtely.addEventListener("change", paivitaTila);
     if (katselu) katselu.addEventListener("change", paivitaTila);
 
     if (katselu) katselu.checked = true;
