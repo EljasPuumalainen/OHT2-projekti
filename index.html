@@ -24,11 +24,12 @@
       }
       #siirtely-wrap { top : 65px; }
       #katselu-wrap { top: 100px; }
+      #piirto-wrap { top: 135px; }
 
       #buttonPiirra {
         position: absolute;
-        top: 140px;
-        left: 20px;
+        top: 20px;
+        left: 130px;
         z-index: 100;
         padding: 10px 20px;
         cursor: pointer;
@@ -48,6 +49,11 @@
     <div id="katselu-wrap" class="menu-item">
       <input type="radio" id="katselutila" name="tila" value="katselutila" checked>
       <label for="katselutila">Katselu</label>
+    </div>
+
+    <div id="piirto-wrap" class="menu-item">
+      <input type="radio" id="piirtotila" name="tila" value="piirtotila" checked>
+      <label for="piirtotila">Piirto</label>
     </div>
 
     <button id="buttonPiirra">Lisää seinä</button>
