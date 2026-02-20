@@ -188,8 +188,12 @@ window.addEventListener("mousemove", (event) => {
 
 window.addEventListener("mouseup", (event) => {
     if (event.button === 0 && isDrawing) {
-        if (currentWall) {
+        //Jos seinä on alle 1m, sitä ei lisätä
+        if (currentWall.scale.z > 1) {
             dragObjects.push(currentWall);
+            currentWall = null;
+        } else {
+            scene.remove(currentWall)
             currentWall = null;
         }
     }
@@ -286,29 +290,28 @@ function paivitaTila() {
     const piirtoRadio = document.getElementById("piirtotila");
 
     if (siirtelyRadio.checked) {
+        console.log("siirtelytila");
         dragControls.enabled = true;
         isDrawing = false;
         enableBtn();
     }
 
     if (katseluRadio.checked) {
+        console.log("katselutila");
         dragControls.enabled = false;
         isDrawing = false;
         enableBtn();
     }
 
     if (piirtoRadio.checked) {
+        console.log("piirtotila");
         dragControls.enabled = false;
         isDrawing = true;
+        disableBtn();
 
         if (activeCamera !== camera2d) {
             activeCamera = camera2d;
             buttonCamera.textContent = "Vaihda 3D";
-            disableBtn();
-            controls2D.enabled = true;
-            controls3D.enabled = false;
-
-            if (dragControls) dragControls.camera = activeCamera;
         }
     }
 }
@@ -320,7 +323,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
     if (siirtely) siirtely.addEventListener("change", paivitaTila);
+    
     if (katselu) katselu.addEventListener("change", paivitaTila);
+
     if (piirto) piirto.addEventListener("change", paivitaTila);
 
     if (katselu) katselu.checked = true;
