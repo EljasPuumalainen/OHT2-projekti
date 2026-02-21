@@ -292,6 +292,13 @@ function paivitaTila() {
         dragControls.enabled = true;
         isDrawing = false;
         enableBtn();
+
+        if (dragControls) {
+                dragControls.dispose();
+            }
+            
+            dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
+            setupDragEvents();
     }
 
     if (katseluRadio.checked) {
@@ -311,13 +318,6 @@ function paivitaTila() {
             buttonCamera.textContent = "Vaihda 3D";
             controls2D.enabled = false;
             controls3D.enabled = false;
-
-            if (dragControls) {
-                dragControls.dispose();
-            }
-            
-            dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
-            setupDragEvents();
         }
     }
 }
