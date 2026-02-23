@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Demo</title>
+    <style>
+      body { margin: 0; }
+
+      #buttonCamera {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 100;
+        padding: 10px 20px;
+        cursor: pointer;
+      }
+      .menu-item {
+        position: absolute;
+        left: 20px;
+        z-index: 100;
+        background: white;
+        padding: 5px;
+        border-radius: 4px;
+      }
+      #siirtely-wrap { top : 65px; }
+      #katselu-wrap { top: 100px; }
+      #piirto-wrap { top: 135px; }
+
+      #buttonPiirra {
+        position: absolute;
+        top: 20px;
+        left: 130px;
+        z-index: 100;
+        padding: 10px 20px;
+        cursor: pointer;
+      }
+      #sidebar {
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 250px;
+        height: 100vh;
+        background: #4A4A4A;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        z-index: 1000;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 15px;
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <button id="buttonCamera">Vaihda 2D</button>
+
+    <div id="siirtely-wrap" class="menu-item">
+      <input type="radio" id="siirtelytila" name="tila" value="siirtelytila">
+      <label for="siirtelytila">Siirtely</label>
+    </div>
+
+    <div id="katselu-wrap" class="menu-item">
+      <input type="radio" id="katselutila" name="tila" value="katselutila" checked>
+      <label for="katselutila">Katselu</label>
+    </div>
+
+    <div id="piirto-wrap" class="menu-item">
+      <input type="radio" id="piirtotila" name="tila" value="piirtotila" checked>
+      <label for="piirtotila">Piirto</label>
+    </div>
+
+    <button id="buttonPiirra">Lisää seinä</button>
+
+    <div id="sidebar">
+      <p style="color: white;">Lisää seinä nappi demona erillisten objektien lisäämistä varten (tavallaan turha vielä)</p>
+      <p style="color: white;">Objektin kääntäminen onnistuu painamalla mouse2 pohjassa (objektin päällä) ja liikuttamalla hiirtä
+                                  vaakasuunnassa
+      </p>
+      <p style="color: white;">Katselu ja piirtotilassa siirto kontrollit lukittu</p>
+      <p style="color: white;">Piirtäminen onnistuu piirtotilassa painamalla mouse1 pohjaan ja vetämällä haluamaansa suuntaan</p>
+      <p style="color: white;">Tällä hetkellä asetettu piirtotilaan 5 asteen kääntö pyöristys</p>
+      <p style="color: white;">Katselutilassa taas on 22.5 asteen pyöristys</p>
+      <p style="color: white;">Piirto tilassa myös kamera lukittu 2D kameraan</p>
+      <p style="color: white;">Seinien datasta voi tulostaa konsoliin JSON tallenteen näppäimistöltä "s" ja avaamalla konsolin F12</p>
+      
+    </div>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
