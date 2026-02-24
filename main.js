@@ -235,6 +235,8 @@ window.addEventListener("mouseup", (event) => {
             scene.remove(currentWall)
             currentWall = null;
         }
+
+        controls2D.enabled = true;
     }
 })
 /*
@@ -266,6 +268,10 @@ function setupTurnEvents() {
     const mouse = new THREE.Vector2();
 
     window.addEventListener("mousedown", function(event) {
+        const siirtelyRadio = document.getElementById("siirtelytila");
+        if (!siirtelyRadio || !siirtelyRadio.checked)
+            return;
+        
         if (event.button == 2) {
 
             //Laskee hiiren sijainnin
@@ -288,6 +294,10 @@ function setupTurnEvents() {
     })
 
     window.addEventListener("mousemove", function(event) {
+        const siirtelyRadio = document.getElementById("siirtelytila");
+        if (!siirtelyRadio || !siirtelyRadio.checked)
+            return;
+
         if (isRotating && selectedObject) {
             selectedObject.rotation.y += event.movementX * 0.005;
         
@@ -333,6 +343,14 @@ function paivitaTila() {
         isDrawing = false;
         enableBtn();
 
+        if (activeCamera === camera2d) {
+            controls2D.enabled = true;
+            controls3D.enabled = false;
+        } else {
+            controls2D.enabled = false;
+            controls3D.enabled = true;
+        }
+
         if (dragControls) {
                 dragControls.dispose();
             }
@@ -345,6 +363,14 @@ function paivitaTila() {
         dragControls.enabled = false;
         isDrawing = false;
         enableBtn();
+
+        if (activeCamera === camera2d) {
+            controls2D.enabled = true;
+            controls3D.enabled = false;
+        } else {
+            controls2D.enabled = false;
+            controls3D.enabled = true;
+        }
     }
 
     if (piirtoRadio.checked) {
@@ -356,7 +382,7 @@ function paivitaTila() {
         if (activeCamera !== camera2d) {
             activeCamera = camera2d;
             buttonCamera.textContent = "Vaihda 3D";
-            controls2D.enabled = false;
+            controls2D.enabled = true;
             controls3D.enabled = false;
         }
     }
