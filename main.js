@@ -182,7 +182,9 @@ window.addEventListener("mousedown", (event) => {
 
     if (intersects.length > 0) {
         isDrawing = true;
-        startPoint.copy(intersects[0].point);
+        startPoint.x = Math.round(intersects[0].point.x * 2) / 2;
+        startPoint.z = Math.round(intersects[0].point.z * 2) / 2;
+        startPoint.y = 0;
 
         const geometry = new THREE.BoxGeometry(0.2, 2.5, 1);
         geometry.translate(0, 1.25, 0.5);
@@ -213,6 +215,10 @@ window.addEventListener("mousemove", (event) => {
 
     if (intersects.length > 0) {
         const endPoint = intersects[0].point;
+
+        endPoint.x = Math.round(endPoint.x * 2) / 2;
+        endPoint.z = Math.round(endPoint.z * 2) / 2;
+
         const distance = startPoint.distanceTo(endPoint);
         let angle = Math.atan2(endPoint.x - startPoint.x, endPoint.z - startPoint.z);
 
@@ -282,11 +288,18 @@ function setupTurnEvents() {
             raycaster.setFromCamera(mouse, activeCamera);
 
             //Tarkistus osuuko säde johonkin objektiin
-            const intersects = raycaster.intersectObjects(dragObjects);
+            const intersects = raycaster.intersectObjects(dragObjects, true);
             if (intersects.length > 0) {
-                selectedObject = intersects[0].object; //Valitaan ensimmäinen osuva objekti (lähimpänä oleva)
+                let hitObject = intersects[0].object;
+
+                // Jos seinä kuuluu ryhmään, valitaan koko ryhmä käännettäväksi
+                if (hitObject.parent && hitObject.parent.type === 'Group') {
+                    selectedObject = hitObject.parent;
+                } else {
+                    selectedObject = hitObject;
+                }
+
                 isRotating = true;
-                //Lukitaan kameran liikutus käännön ajaksi
                 controls3D.enabled = false;
                 controls2D.enablePan = false;
             }
@@ -418,6 +431,7 @@ export function paivitaRaahaus() {
     // 2. Kontrollit ryhmille
     groupDragControls = new DragControls(groupDragObjects, activeCamera, renderer.domElement);
     groupDragControls.transformGroup = true; // Tämä liikuttaa koko ryhmää, ei vain jäsentä
+    
 
     // Lisätään tapahtumakuuntelijat molempiin
     [dragControls, groupDragControls].forEach(ctrl => {
@@ -429,8 +443,12 @@ export function paivitaRaahaus() {
         ctrl.addEventListener("drag", function(event) {
             event.object.position.y = 0;
             // Snapping
-            event.object.position.x = Math.round(event.object.position.x * 10) / 10;
-            event.object.position.z = Math.round(event.object.position.z * 10) / 10;
+
+            event.object.rotation.x = 0;
+            event.object.rotation.z = 0;
+            
+            event.object.position.x = Math.round(event.object.position.x * 2) / 2;
+            event.object.position.z = Math.round(event.object.position.z * 2) / 2;
         });
 
         ctrl.addEventListener("dragend", function(event) {
