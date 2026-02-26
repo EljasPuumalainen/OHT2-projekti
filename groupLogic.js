@@ -34,7 +34,7 @@ function asetaKorostus(objekti, paalla) {
         if (child.isMesh && child.material) {
             // Käytetään emissive-väriä korostukseen (keltainen)
             if (paalla) {
-                child.material.emissive.set(0x555500);
+                child.material.emissive.set(0xFFFF00);
             } else {
                 child.material.emissive.set(0x000000);
             }
