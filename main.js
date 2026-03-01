@@ -3,68 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 
 import { setupInputHandlers } from './inputHandler';
-
-
-
-const scene = new THREE.Scene();
-const camera3d = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const aspect = window.innerWidth / window.innerHeight;
-const zoom = 10; //Isompi luku = näkyy enemmän aluetta
-
-//TODO:
-//*Tätä varmaan pitää vielä säätää, jos muutetaan grid säädettäväksi
-const camera2d = new THREE.OrthographicCamera(
-    -zoom * aspect, //Vasen
-    zoom * aspect,  //Oikea
-    zoom,           //Ylä
-    -zoom,          //Ala
-    1, 1000
-);
-camera2d.position.set(0,50,0); //Keskellä 50, asettaa kameran gridin keskelle 100/2=50
-camera2d.lookAt(0,0,0);
-
-//TODO:
-//*Tätä varmaan pitää vielä säätää, jos muutetaan grid säädettäväksi
-camera3d.position.set(10, 10, 10); //Tässä kaikkien täytyy olla > 0, muuten kontrollit menee jumiin, eikä kameraa voi liikuttaa.
-
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setClearColor(0x2F2F2F, 1);
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const controls3D = new OrbitControls(camera3d, renderer.domElement);
-controls3D.target.set(0,0,0);
-controls3D.maxPolarAngle = Math.PI / 2.5;
-controls3D.update()
-
-//2D Kameran liikutus 
-//Vasen nappi pohjassa = liikutus
-//Rulla zoom
-//Oikea nappi kääntö estetty, siirtää vain objekteja
-const controls2D = new OrbitControls(camera2d, renderer.domElement);
-controls2D.enableRotate = false;
-controls2D.enabled = false;
-controls2D.update()
-
-//Valot
-//Yleisvalo
-const ambientLight = new THREE.AmbientLight(0xffffff, 2)
-scene.add(ambientLight);
-//Suuntavalo luo 3D-efektin objektille
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(5, 10, 7.5);
-scene.add(directionalLight);
-
-//TODO: Säädettävä grid?
-//Kaksi erillistä gridiä, ensimmäinen koko alue tummemmat viivat ja toinen grid jakaa 4x4 alueisiin vaaleammilla viivoilla
-//100 x 100 m grid 1 ruutu = 1 metri
-const grid = new THREE.GridHelper(100, 100, 0x666666, 0x666666);
-scene.add( grid );
-const grid2 = new THREE.GridHelper(100, 20, 0xbbbbbb, 0xbbbbbb);
-scene.add( grid2 );
-
-const buttonCamera = document.getElementById("buttonCamera");
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane } from './sceneSetup.js';
 
 let activeCamera = camera3d;
 
@@ -125,49 +64,12 @@ let dragControls = new DragControls(dragObjects, activeCamera, renderer.domEleme
 dragControls.transformGroup = true; // Lisää tämä rivi kaikkialle missä luot dragControlsit
 paivitaRaahaus()
 
-const planeGeo = new THREE.PlaneGeometry(100, 100);
-const planeMat = new THREE.MeshBasicMaterial({ visible: false })
-const drawingPlane = new THREE.Mesh(planeGeo, planeMat);
-drawingPlane.rotation.x = -Math.PI / 2;
-scene.add(drawingPlane);
-//TODO: Seinien piirtäminen
-
+//Piirto toiminnot
 let isDrawing = false;
 let currentWall = null;
 let startPoint = new THREE.Vector3();
 
-/*
 window.addEventListener("mousedown", (event) => {
-    if (!isDrawing || event.button !== 0)
-        return;
-
-    const mouse = new THREE.Vector2(
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
-    )
-
-    const raycaster = new THREE.Raycaster()
-    raycaster.setFromCamera(mouse, activeCamera);
-    const intersects = raycaster.intersectObject(drawingPlane)
-
-    if (intersects.length > 0) {
-        isDrawing = true;
-        startPoint.copy(intersects[0].point);
-
-        const geometry = new THREE.BoxGeometry(0.2, 2.5, 1);
-        geometry.translate(0, 1.25, 0.5);
-
-        const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 })
-        currentWall = new THREE.Mesh(geometry, material)
-
-        currentWall.position.copy(startPoint);
-        scene.add(currentWall);
-
-        controls2D.enabled = false;
-    }
-*/
-
-    window.addEventListener("mousedown", (event) => {
     if (!isDrawing || event.button !== 0)
         return;
 
@@ -199,7 +101,6 @@ window.addEventListener("mousedown", (event) => {
     }
 });
     
-
 window.addEventListener("mousemove", (event) => {
     if (!isDrawing || !currentWall)
         return;
@@ -245,26 +146,7 @@ window.addEventListener("mouseup", (event) => {
         controls2D.enabled = true;
     }
 })
-/*
-//Objektien raahaus
-function paivitaRaahaus() {
-    dragControls.addEventListener("dragstart", function(event) {
-        controls2D.enabled = false;
-        controls3D.enabled = false;
-    });
 
-    dragControls.addEventListener("drag", function(event) {
-        event.object.position.y = 0;
-        //10 cm snapping
-        event.object.position.x = Math.round(event.object.position.x * 10) / 10;
-        event.object.position.z = Math.round(event.object.position.z * 10) / 10;
-    });
-
-    dragControls.addEventListener("dragend", function(event) {
-        if (activeCamera === camera2d) controls2D.enabled = true;
-        else controls3D.enabled = true;
-    });
-}*/
 setupTurnEvents();
 
 function setupTurnEvents() {
@@ -321,11 +203,7 @@ function setupTurnEvents() {
 
     window.addEventListener("mouseup", function(event) {
         if (event.button == 2 && isRotating) {
-            //TODO:
-            //*22.5 asteen lukitus
-            //*Tätä pitää vielä miettiä, jos ovet ym. tehdään sillä tavalla että seinään tehdään reikä, niin silloon pienempi astelukitus
-            //*on varmaankin turha, jos taas ovi tehdään eri tavalla sitten varmaankin tarvitaan pienempi aste
-            const step = 22.5 * (Math.PI / 180);
+            const step = 5 * (Math.PI / 180);
             if (selectedObject) {
                 selectedObject.rotation.y = Math.round(selectedObject.rotation.y / step) * step;
             }
@@ -418,7 +296,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     paivitaTila();
 })
-
 
 export function paivitaRaahaus() {
     // Siivotaan vanhat pois
