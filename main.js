@@ -253,6 +253,7 @@ function paivitaTila() {
 
     if (katseluRadio.checked) {
         dragControls.enabled = false;
+        groupDragControls.enabled = false;
         isDrawing = false;
         enableBtn();
 
@@ -267,6 +268,7 @@ function paivitaTila() {
 
     if (piirtoRadio.checked) {
         dragControls.enabled = false;
+        groupDragControls.enabled = false;
         isDrawing = true;
         disableBtn();
 
