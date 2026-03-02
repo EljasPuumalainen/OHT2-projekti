@@ -40,23 +40,54 @@ const dragObjects = []
 const groupDragObjects = [];
 let groupDragControls
 
-function lisaaSeina() {
-    //Seinän mitat 5m pitkä, 2.5m korkea, 0.2m leveä
-    const geometry = new THREE.BoxGeometry( 5, 2.5, 0.2 );
-    geometry.translate(0, 1.25, 0)
+function lisaaIkkuna() {
+    const ikkunaRyhma = new THREE.Group();
     const material = new THREE.MeshStandardMaterial( { color: 0xf0f0f0 } );
-    const cube = new THREE.Mesh( geometry, material );
-    cube.position.y = 0;
+    //1m pitkä, 0.95m korkea = 0.60m aukko, 0.2m leveä
+    const pituus = 1;
+    const paksuus = 0.3;
+    const ylakorkeus = 0.9;
+
+    const alapuoli = new THREE.BoxGeometry( pituus, 0.9, paksuus );
+    const ikkunaAla = new THREE.Mesh( alapuoli, material );
+
+    ikkunaAla.position.y = 0.9 / 2;
+    
+    const ylapuoli = new THREE.BoxGeometry( pituus, 0.9, paksuus );
+    const ikkunaYla = new THREE.Mesh( ylapuoli, material );
+    
+    ikkunaYla.position.y = 0.9 + 0.7 + (ylakorkeus / 2);
+    
+    
+    const viivaGeo = new THREE.BoxGeometry(pituus + 0.02, 0.02, 0.02); // Selkeä paksuus
+    const viivaMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const viiva1 = new THREE.Mesh(viivaGeo, viivaMat);
+    const viiva2 = new THREE.Mesh(viivaGeo, viivaMat);
+    const viiva3 = new THREE.Mesh(viivaGeo, viivaMat);
+
+    viiva1.position.set(0, 2.5, 0.1);
+    viiva2.position.set(0, 2.5, 0);
+    viiva3.position.set(0, 2.5, -0.1);
+    
+    ikkunaRyhma.add(viiva1);
+    ikkunaRyhma.add(viiva2);
+    ikkunaRyhma.add(viiva3);
+    
+
+    ikkunaRyhma.add(ikkunaAla);
+    ikkunaRyhma.add(ikkunaYla);
 
     //Lisätään luotu objekti listaan ja sceneen
-    dragObjects.push(cube);
-    scene.add( cube );
+    groupDragObjects.push(ikkunaRyhma)
+    scene.add( ikkunaRyhma );
+
+    paivitaRaahaus()
 }
 
 //Nappi lisää seiniä
 //Toimii vielä siten, että nappi lisää aina saman kokoisen seinän
-buttonPiirra.addEventListener("click", () => {
-    lisaaSeina()
+buttonIkkuna.addEventListener("click", () => {
+    lisaaIkkuna()
 })
 
 let dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
@@ -87,7 +118,7 @@ window.addEventListener("mousedown", (event) => {
         startPoint.z = Math.round(intersects[0].point.z * 2) / 2;
         startPoint.y = 0;
 
-        const geometry = new THREE.BoxGeometry(0.2, 2.5, 1);
+        const geometry = new THREE.BoxGeometry(0.3, 2.5, 1);
         geometry.translate(0, 1.25, 0.5);
 
         const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 })
