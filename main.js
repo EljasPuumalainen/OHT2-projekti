@@ -1,9 +1,8 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { DragControls } from 'three/addons/controls/DragControls.js';
 
+import { DragControls } from 'three/addons/controls/DragControls.js';
 import { setupInputHandlers } from './inputHandler';
-import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane } from './sceneSetup.js';
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 
 let activeCamera = camera3d;
 
@@ -170,10 +169,12 @@ function setupTurnEvents() {
             raycaster.setFromCamera(mouse, activeCamera);
 
             //Tarkistus osuuko säde johonkin objektiin
-            const intersects = raycaster.intersectObjects(dragObjects, true);
+            const intersects = raycaster.intersectObjects(scene.children, true);
             if (intersects.length > 0) {
                 let hitObject = intersects[0].object;
 
+                if (hitObject === grid || hitObject === grid2 || hitObject === drawingPlane)
+                    return
                 // Jos seinä kuuluu ryhmään, valitaan koko ryhmä käännettäväksi
                 if (hitObject.parent && hitObject.parent.type === 'Group') {
                     selectedObject = hitObject.parent;
