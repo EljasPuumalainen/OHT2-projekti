@@ -1,67 +1,8 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
 import { DragControls } from 'three/addons/controls/DragControls.js';
-import { SceneNode } from 'three/webgpu';
-
-const scene = new THREE.Scene();
-const camera3d = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const aspect = window.innerWidth / window.innerHeight;
-const zoom = 10; //Isompi luku = näkyy enemmän aluetta
-
-//TODO:
-//*Tätä varmaan pitää vielä säätää, jos muutetaan grid säädettäväksi
-const camera2d = new THREE.OrthographicCamera(
-    -zoom * aspect, //Vasen
-    zoom * aspect,  //Oikea
-    zoom,           //Ylä
-    -zoom,          //Ala
-    1, 1000
-);
-camera2d.position.set(0,50,0); //Keskellä 50, asettaa kameran gridin keskelle 100/2=50
-camera2d.lookAt(0,0,0);
-
-//TODO:
-//*Tätä varmaan pitää vielä säätää, jos muutetaan grid säädettäväksi
-camera3d.position.set(10, 10, 10); //Tässä kaikkien täytyy olla > 0, muuten kontrollit menee jumiin, eikä kameraa voi liikuttaa.
-
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setClearColor(0x2F2F2F, 1);
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const controls3D = new OrbitControls(camera3d, renderer.domElement);
-controls3D.target.set(0,0,0);
-controls3D.maxPolarAngle = Math.PI / 2.5;
-controls3D.update()
-
-//2D Kameran liikutus 
-//Vasen nappi pohjassa = liikutus
-//Rulla zoom
-//Oikea nappi kääntö estetty, siirtää vain objekteja
-const controls2D = new OrbitControls(camera2d, renderer.domElement);
-controls2D.enableRotate = false;
-controls2D.enabled = false;
-controls2D.update()
-
-//Valot
-//Yleisvalo
-const ambientLight = new THREE.AmbientLight(0xffffff, 2)
-scene.add(ambientLight);
-//Suuntavalo luo 3D-efektin objektille
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(5, 10, 7.5);
-scene.add(directionalLight);
-
-//TODO: Säädettävä grid?
-//Kaksi erillistä gridiä, ensimmäinen koko alue tummemmat viivat ja toinen grid jakaa 4x4 alueisiin vaaleammilla viivoilla
-//100 x 100 m grid 1 ruutu = 1 metri
-const grid = new THREE.GridHelper(100, 100, 0x666666, 0x666666);
-scene.add( grid );
-const grid2 = new THREE.GridHelper(100, 20, 0xbbbbbb, 0xbbbbbb);
-scene.add( grid2 );
-
-const buttonCamera = document.getElementById("buttonCamera");
+import { setupInputHandlers } from './inputHandler';
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 
 let activeCamera = camera3d;
 
@@ -84,7 +25,7 @@ buttonCamera.addEventListener("click", () => {
     }
     
     dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
-    setupDragEvents();
+    paivitaRaahaus();
 
     const siirtoPaalla = document.getElementById("siirtelytila").checked;
     if (!siirtoPaalla) {
@@ -95,35 +36,65 @@ buttonCamera.addEventListener("click", () => {
 //Lista objekteille, jota voi siirrellä
 const dragObjects = []
 
-function lisaaSeina() {
-    //Seinän mitat 5m pitkä, 2.5m korkea, 0.2m leveä
-    const geometry = new THREE.BoxGeometry( 5, 2.5, 0.2 );
-    geometry.translate(0, 1.25, 0)
+//lista ryhmille 
+const groupDragObjects = [];
+let groupDragControls
+
+function lisaaIkkuna() {
+    const ikkunaRyhma = new THREE.Group();
     const material = new THREE.MeshStandardMaterial( { color: 0xf0f0f0 } );
-    const cube = new THREE.Mesh( geometry, material );
-    cube.position.y = 0;
+    //1m pitkä, 0.95m korkea = 0.60m aukko, 0.2m leveä
+    const pituus = 1;
+    const paksuus = 0.3;
+    const ylakorkeus = 0.9;
+
+    const alapuoli = new THREE.BoxGeometry( pituus, 0.9, paksuus );
+    const ikkunaAla = new THREE.Mesh( alapuoli, material );
+
+    ikkunaAla.position.y = 0.9 / 2;
+    
+    const ylapuoli = new THREE.BoxGeometry( pituus, 0.9, paksuus );
+    const ikkunaYla = new THREE.Mesh( ylapuoli, material );
+    
+    ikkunaYla.position.y = 0.9 + 0.7 + (ylakorkeus / 2);
+    
+    
+    const viivaGeo = new THREE.BoxGeometry(pituus + 0.02, 0.02, 0.02); // Selkeä paksuus
+    const viivaMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const viiva1 = new THREE.Mesh(viivaGeo, viivaMat);
+    const viiva2 = new THREE.Mesh(viivaGeo, viivaMat);
+    const viiva3 = new THREE.Mesh(viivaGeo, viivaMat);
+
+    viiva1.position.set(0, 2.5, 0.1);
+    viiva2.position.set(0, 2.5, 0);
+    viiva3.position.set(0, 2.5, -0.1);
+    
+    ikkunaRyhma.add(viiva1);
+    ikkunaRyhma.add(viiva2);
+    ikkunaRyhma.add(viiva3);
+    
+
+    ikkunaRyhma.add(ikkunaAla);
+    ikkunaRyhma.add(ikkunaYla);
 
     //Lisätään luotu objekti listaan ja sceneen
-    dragObjects.push(cube);
-    scene.add( cube );
+    groupDragObjects.push(ikkunaRyhma)
+    scene.add( ikkunaRyhma );
+
+    paivitaRaahaus()
 }
 
 //Nappi lisää seiniä
 //Toimii vielä siten, että nappi lisää aina saman kokoisen seinän
-buttonPiirra.addEventListener("click", () => {
-    lisaaSeina()
+buttonIkkuna.addEventListener("click", () => {
+    lisaaIkkuna()
 })
 
 let dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
-setupDragEvents();
+dragControls.transformGroup = true; // Lisää tämä rivi kaikkialle missä luot dragControlsit
+paivitaRaahaus()
 
-const planeGeo = new THREE.PlaneGeometry(100, 100);
-const planeMat = new THREE.MeshBasicMaterial({ visible: false })
-const drawingPlane = new THREE.Mesh(planeGeo, planeMat);
-drawingPlane.rotation.x = -Math.PI / 2;
-scene.add(drawingPlane);
-//TODO: Seinien piirtäminen
-
+//Piirto toiminnot
 let isDrawing = false;
 let currentWall = null;
 let startPoint = new THREE.Vector3();
@@ -143,9 +114,11 @@ window.addEventListener("mousedown", (event) => {
 
     if (intersects.length > 0) {
         isDrawing = true;
-        startPoint.copy(intersects[0].point);
+        startPoint.x = Math.round(intersects[0].point.x * 2) / 2;
+        startPoint.z = Math.round(intersects[0].point.z * 2) / 2;
+        startPoint.y = 0;
 
-        const geometry = new THREE.BoxGeometry(0.2, 2.5, 1);
+        const geometry = new THREE.BoxGeometry(0.3, 2.5, 1);
         geometry.translate(0, 1.25, 0.5);
 
         const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 })
@@ -156,8 +129,8 @@ window.addEventListener("mousedown", (event) => {
 
         controls2D.enabled = false;
     }
-})
-
+});
+    
 window.addEventListener("mousemove", (event) => {
     if (!isDrawing || !currentWall)
         return;
@@ -173,6 +146,10 @@ window.addEventListener("mousemove", (event) => {
 
     if (intersects.length > 0) {
         const endPoint = intersects[0].point;
+
+        endPoint.x = Math.round(endPoint.x * 2) / 2;
+        endPoint.z = Math.round(endPoint.z * 2) / 2;
+
         const distance = startPoint.distanceTo(endPoint);
         let angle = Math.atan2(endPoint.x - startPoint.x, endPoint.z - startPoint.z);
 
@@ -200,25 +177,6 @@ window.addEventListener("mouseup", (event) => {
     }
 })
 
-//Objektien raahaus
-function setupDragEvents() {
-    dragControls.addEventListener("dragstart", function(event) {
-        controls2D.enabled = false;
-        controls3D.enabled = false;
-    });
-
-    dragControls.addEventListener("drag", function(event) {
-        event.object.position.y = 0;
-        //10 cm snapping
-        event.object.position.x = Math.round(event.object.position.x * 10) / 10;
-        event.object.position.z = Math.round(event.object.position.z * 10) / 10;
-    });
-
-    dragControls.addEventListener("dragend", function(event) {
-        if (activeCamera === camera2d) controls2D.enabled = true;
-        else controls3D.enabled = true;
-    });
-}
 setupTurnEvents();
 
 function setupTurnEvents() {
@@ -242,11 +200,20 @@ function setupTurnEvents() {
             raycaster.setFromCamera(mouse, activeCamera);
 
             //Tarkistus osuuko säde johonkin objektiin
-            const intersects = raycaster.intersectObjects(dragObjects);
+            const intersects = raycaster.intersectObjects(scene.children, true);
             if (intersects.length > 0) {
-                selectedObject = intersects[0].object; //Valitaan ensimmäinen osuva objekti (lähimpänä oleva)
+                let hitObject = intersects[0].object;
+
+                if (hitObject === grid || hitObject === grid2 || hitObject === drawingPlane)
+                    return
+                // Jos seinä kuuluu ryhmään, valitaan koko ryhmä käännettäväksi
+                if (hitObject.parent && hitObject.parent.type === 'Group') {
+                    selectedObject = hitObject.parent;
+                } else {
+                    selectedObject = hitObject;
+                }
+
                 isRotating = true;
-                //Lukitaan kameran liikutus käännön ajaksi
                 controls3D.enabled = false;
                 controls2D.enablePan = false;
             }
@@ -268,11 +235,7 @@ function setupTurnEvents() {
 
     window.addEventListener("mouseup", function(event) {
         if (event.button == 2 && isRotating) {
-            //TODO:
-            //*22.5 asteen lukitus
-            //*Tätä pitää vielä miettiä, jos ovet ym. tehdään sillä tavalla että seinään tehdään reikä, niin silloon pienempi astelukitus
-            //*on varmaankin turha, jos taas ovi tehdään eri tavalla sitten varmaankin tarvitaan pienempi aste
-            const step = 22.5 * (Math.PI / 180);
+            const step = 5 * (Math.PI / 180);
             if (selectedObject) {
                 selectedObject.rotation.y = Math.round(selectedObject.rotation.y / step) * step;
             }
@@ -316,11 +279,12 @@ function paivitaTila() {
             }
             
             dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
-            setupDragEvents();
+            paivitaRaahaus();
     }
 
     if (katseluRadio.checked) {
         dragControls.enabled = false;
+        groupDragControls.enabled = false;
         isDrawing = false;
         enableBtn();
 
@@ -335,6 +299,7 @@ function paivitaTila() {
 
     if (piirtoRadio.checked) {
         dragControls.enabled = false;
+        groupDragControls.enabled = false;
         isDrawing = true;
         disableBtn();
 
@@ -365,6 +330,55 @@ window.addEventListener("DOMContentLoaded", () => {
 
     paivitaTila();
 })
+
+export function paivitaRaahaus() {
+    // Siivotaan vanhat pois
+    if (dragControls) dragControls.dispose();
+    if (groupDragControls) groupDragControls.dispose();
+
+    // 1. Kontrollit seinille
+    dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
+    
+    // 2. Kontrollit ryhmille
+    groupDragControls = new DragControls(groupDragObjects, activeCamera, renderer.domElement);
+    groupDragControls.transformGroup = true; // Tämä liikuttaa koko ryhmää, ei vain jäsentä
+    
+
+    // Lisätään tapahtumakuuntelijat molempiin
+    [dragControls, groupDragControls].forEach(ctrl => {
+        ctrl.addEventListener("dragstart", function(event) {
+            controls2D.enabled = false;
+            controls3D.enabled = false;
+        });
+
+        ctrl.addEventListener("drag", function(event) {
+            event.object.position.y = 0;
+            // Snapping
+
+            event.object.rotation.x = 0;
+            event.object.rotation.z = 0;
+            
+            event.object.position.x = Math.round(event.object.position.x * 2) / 2;
+            event.object.position.z = Math.round(event.object.position.z * 2) / 2;
+        });
+
+        ctrl.addEventListener("dragend", function(event) {
+            if (activeCamera === camera2d) controls2D.enabled = true;
+            else controls3D.enabled = true;
+        });
+    });
+
+    // Tarkistetaan onko siirtelytila päällä
+    const siirtoPaalla = document.getElementById("siirtelytila").checked;
+    if (!siirtoPaalla) {
+        dragControls.enabled = false;
+        groupDragControls.enabled = false;
+    }
+
+    console.log(`%c[System] Raahaus päivitetty. Seiniä: ${dragObjects.length}, Ryhmiä: ${groupDragObjects.length}`, "color: #27ae60");
+}
+
+setupInputHandlers(scene, dragObjects, groupDragObjects, () => activeCamera);
 
 function animate() {
     requestAnimationFrame(animate);

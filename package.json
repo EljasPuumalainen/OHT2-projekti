@@ -1,8 +1,17 @@
 {
-  "dependencies": {
-    "three": "^0.182.0"
+  "name": "oht2-projekti-1",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^6.4.1"
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
   }
 }
