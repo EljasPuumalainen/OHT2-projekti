@@ -27,14 +27,6 @@
       #piirto-wrap { top: 135px; }
       #ikkuna-wrap { top: 170px; }
 
-      #buttonIkkuna {
-        position: absolute;
-        top: 20px;
-        left: 130px;
-        z-index: 100;
-        padding: 10px 20px;
-        cursor: pointer;
-      }
       #sidebar {
         position: fixed;
         right: 0;
@@ -76,8 +68,6 @@
       <label for="ikkunatila">Ikkunoiden lisäys</label>
     </div>
 
-    <button id="buttonIkkuna">Lisää ikkunaobjekti</button>
-
     <div id="sidebar">
       <p style="color: white;">Objektin kääntäminen onnistuu painamalla mouse2 pohjassa (objektin päällä) ja liikuttamalla hiirtä
                                   vaakasuunnassa
@@ -87,6 +77,9 @@
       <p style="color: white;">Tällä hetkellä asetettu piirtotilaan 5 asteen kääntö pyöristys</p>
       <p style="color: white;">Piirto tilassa myös kamera lukittu 2D kameraan</p>
       <p style="color: white;">Seinien datasta voi tulostaa konsoliin JSON tallenteen näppäimistöltä "s" ja avaamalla konsolin F12</p>
+      <p style="color: white;">Ikkunan lisäys toimii ikkunalisäys tilassa, viemällä hiiren seinänpäälle tulee korostus ja siitä
+        klikkaamalla seinä muuttuu ikkunaksi
+      </p>
       
     </div>
 

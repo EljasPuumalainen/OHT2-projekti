@@ -86,12 +86,6 @@ function lisaaIkkuna(kohdeRyhma = null, zPos = 0.5) {
     }
 }
 
-//Nappi lisää seiniä
-//Toimii vielä siten, että nappi lisää aina saman kokoisen seinän
-buttonIkkuna.addEventListener("click", () => {
-    lisaaIkkuna()
-})
-
 let dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
 dragControls.transformGroup = true; // Lisää tämä rivi kaikkialle missä luot dragControlsit
 paivitaRaahaus()
