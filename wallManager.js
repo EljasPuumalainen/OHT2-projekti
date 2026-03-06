@@ -119,7 +119,7 @@ window.addEventListener("mouseup", (event) => {
     }
 })
 
-//Ikkunan lisäys
+//Ikkunan lisäys toiminnot
 export const hoverBoxGeo = new THREE.BoxGeometry(0.31, 2.51, 1.01);
 export const hoverBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBox = new THREE.Mesh(hoverBoxGeo, hoverBoxMat);

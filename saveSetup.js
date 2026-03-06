@@ -3,21 +3,20 @@ import { dragObjects, groupDragObjects } from "./wallManager";
 //Testaus funktiolle, joka muuntaa seinät jsoniksi
 export function tallennaSeinatJSON(){
     //Kerätään uuteen taulukkoon vain tarvittava seinien data
-    const seinaData = dragObjects.map((cube, index) => {
+    const seinaData = groupDragObjects.map((group, index) => {
+        
+        const seinaPalat = group.children.filter(c => c.userData.tyyppi === "seina")
+        const laskettuPituus = seinaPalat.lenght * 0.5
+
         return {
             id: index,
             location: {
-                x: cube.position.x,
-                y: cube.position.y,
-                z: cube.position.z
+                x: group.position.x,
+                y: group.position.y,
+                z: group.position.z
             },
             rotation: {
-                y: cube.rotation.y
-            },
-            dimensions: {
-                width: cube.geometry.parameters.width,
-                height: cube.geometry.parameters.height,
-                depth: cube.geometry.parameters.depth
+                y: group.rotation.y
             }
         };
     });
