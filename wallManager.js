@@ -292,6 +292,80 @@ export function lisaaOvi(kohdeRyhma, zPos) {
     }
 }
 
+export function setupTurnOvi(getCamera) {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    
+    window.addEventListener("mousedown", function(event) {
+        const oviRadio = this.document.getElementById("ovitila");
+
+        if (!oviRadio || !oviRadio.checked)
+            return;
+
+        if (event.button == 2) {
+
+            //Laskee hiiren sijainnin
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            //Päivitetään raycaster kameran ja hiiren mukaan
+            if (getActiveCamera) {
+                raycaster.setFromCamera(mouse, getActiveCamera());
+            }
+
+            //Tarkistus osuuko säde johonkin objektiin
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            if (intersects.length > 0) {
+                let hitObject = intersects[0].object;
+
+                if (hitObject === grid || hitObject === grid2 || hitObject === drawingPlane)
+                    return
+                // Jos seinä kuuluu ryhmään, valitaan koko ryhmä käännettäväksi
+                let topObject = hitObject;
+                while (topObject.parent && topObject.parent !== scene) {
+                    topObject = topObject.parent;
+                }
+
+                const oviElementti = topObject.children.find(c => c.userData.tyyppi === "ovi");
+
+
+                if (oviElementti) {
+
+                    if (oviElementti.userData.asento === undefined) {
+                        oviElementti.userData.asento = 0;
+                    }
+
+                    oviElementti.userData.asento = (oviElementti.userData.asento + 1) % 4;
+
+                    switch (oviElementti.userData.asento) {
+                        case 0:
+                            // Perusasento (Vasen, Puoli A)
+                            oviElementti.rotation.y = 0;
+                            oviElementti.scale.z = 1;
+                            break;
+                        case 1:
+                            // Kätisyyden vaihto (Oikea, Puoli A)
+                            // Käännetään 180 astetta ja peilataan, jotta sarana pysyy paikallaan
+                            oviElementti.rotation.y = 0;
+                            oviElementti.scale.z = -1;
+                            break;
+                        case 2:
+                            // Puolen vaihto (Oikea, Puoli B)
+                            oviElementti.rotation.y = Math.PI; 
+                            oviElementti.scale.z = -1;
+                            break;
+                        case 3:
+                            // Kätisyyden vaihto (Vasen, Puoli B)
+                            oviElementti.rotation.y = Math.PI;
+                            oviElementti.scale.z = 1;
+                            break;
+                    }
+                }
+            }
+        }
+    })
+}
+
 export function setupTurnEvents(getCamera) {
     let isRotating = false;
     let selectedObject = null;
@@ -300,6 +374,7 @@ export function setupTurnEvents(getCamera) {
 
     window.addEventListener("mousedown", function(event) {
         const siirtelyRadio = document.getElementById("siirtelytila");
+
         if (!siirtelyRadio || !siirtelyRadio.checked)
             return;
         
@@ -326,11 +401,13 @@ export function setupTurnEvents(getCamera) {
                 while (topObject.parent && topObject.parent !== scene) {
                     topObject = topObject.parent;
                 }
-                selectedObject = topObject;
 
-                isRotating = true;
-                controls3D.enabled = false;
-                controls2D.enablePan = false;
+                if (siirtelyRadio.checked) {
+                    selectedObject = topObject;
+                    isRotating = true;
+                    controls3D.enabled = false;
+                    controls2D.enablePan = false;
+                }
             }
         }
     })
