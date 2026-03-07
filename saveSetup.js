@@ -6,7 +6,6 @@ export function tallennaSeinatJSON(){
     const seinaData = groupDragObjects.map((group, index) => {
         
         const seinaPalat = group.children.filter(c => c.userData.tyyppi === "seina")
-        const laskettuPituus = seinaPalat.lenght * 0.5
 
         return {
             id: index,
