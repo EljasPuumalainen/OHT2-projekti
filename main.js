@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import { setupInputHandlers } from './inputHandler';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi } from './wallManager.js';
+import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi } from './wallManager.js';
 import { tallennaSeinatJSON } from './saveSetup.js';
 
 let activeCamera = camera3d;
@@ -46,6 +46,8 @@ setDrawing(true)
 initWallManager(() => activeCamera)
 
 setupTurnEvents(() => activeCamera)
+
+setupTurnOvi(() => activeCamera)
 
 function disableBtn() {
     document.getElementById("buttonCamera").disabled = true;
