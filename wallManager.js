@@ -268,18 +268,22 @@ export function lisaaOvi(kohdeRyhma, zPos) {
 
     // 1/4 Ympyrä
     const geometry = new THREE.CircleGeometry(1, 64, 0, Math.PI / 2)
-    const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, side: THREE.DoubleSide })
+    const material = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, side: THREE.DoubleSide })
     const circle = new THREE.Mesh(geometry, material)
     geometry.rotateX(-Math.PI / 2);
     circle.position.set(0.15, 0.01, 0.5)
 
-    //Pala seinää
     const ylapalaGeo = new THREE.BoxGeometry(0.3, 0.4, 1.0);
     const ylapalaMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
     const ylapala = new THREE.Mesh(ylapalaGeo, ylapalaMat);
     ylapala.position.y = 2.3;
 
-    oviElementit.add(circle, ylapala)
+    const alapalaGeo = new THREE.BoxGeometry(0.3, 0.01, 1.0);
+    const alapalaMat = new THREE.MeshStandardMaterial({ color: 0xa0a0a0 });
+    const alapala = new THREE.Mesh(alapalaGeo, alapalaMat);
+    alapala.position.set(0, 0.005, 0)
+
+    oviElementit.add(circle, ylapala, alapala)
 
     oviElementit.position.z = zPos;
     oviElementit.userData.tyyppi = "ovi"
@@ -344,8 +348,7 @@ export function setupTurnOvi(getCamera) {
                             oviElementti.scale.z = 1;
                             break;
                         case 1:
-                            // Kätisyyden vaihto (Oikea, Puoli A)
-                            // Käännetään 180 astetta ja peilataan, jotta sarana pysyy paikallaan
+                            // Kätisyyden vaihto (Vasen, Puoli B)
                             oviElementti.rotation.y = 0;
                             oviElementti.scale.z = -1;
                             break;
@@ -355,7 +358,7 @@ export function setupTurnOvi(getCamera) {
                             oviElementti.scale.z = -1;
                             break;
                         case 3:
-                            // Kätisyyden vaihto (Vasen, Puoli B)
+                            // Kätisyyden vaihto (Oikea), Puoli A)
                             oviElementti.rotation.y = Math.PI;
                             oviElementti.scale.z = 1;
                             break;
