@@ -128,8 +128,9 @@ hoverBox.visible = false;
 
 window.addEventListener("mousemove", (event) => {
     const ikkunaTilaPaalla = document.getElementById("ikkunatila").checked;
+    const oviTilaPaalla = document.getElementById("ovitila").checked;
     
-    if (ikkunaTilaPaalla) {
+    if (ikkunaTilaPaalla || oviTilaPaalla) {
         const mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
@@ -137,7 +138,7 @@ window.addEventListener("mousemove", (event) => {
         const raycaster = new THREE.Raycaster();
         if (getActiveCamera) {
         raycaster.setFromCamera(mouse, getActiveCamera());
-    }
+        }
 
         // Etsitään osumia kaikista seinäryhmien lapsista
         const allParts = [];
@@ -163,45 +164,51 @@ window.addEventListener("mousemove", (event) => {
     } else {
         hoverBox.visible = false;
     }
+    
 });
 
 window.addEventListener("mousedown", (event) => {
-    const ikkunaTilaElement = document.getElementById("ikkunatila");
-    if (!ikkunaTilaElement || !ikkunaTilaElement.checked) return;
+    if (event.button !== 0) return;
 
-    if (event.button === 0 ) { // Vasen klikkaus ja ei piirretä seinää
-        const mouse = new THREE.Vector2(
-            (event.clientX / window.innerWidth) * 2 - 1,
-            -(event.clientY / window.innerHeight) * 2 + 1
+    const ikkunaRadio = document.getElementById("ikkunatila");
+    const oviRadio = document.getElementById("ovitila");
+
+    if (!ikkunaRadio?.checked && !oviRadio?.checked) return;
+    
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
         );
 
-        const raycaster = new THREE.Raycaster();
-        if (getActiveCamera) {
+    const raycaster = new THREE.Raycaster();
+    if (getActiveCamera) {
         raycaster.setFromCamera(mouse, getActiveCamera());
-    }
+        }
         
-        const intersects = raycaster.intersectObjects(groupDragObjects, true);
-        
-        if (intersects.length > 0) {
-            const osuma = intersects.find(i => i.object.userData.tyyppi === "seina");
-            // Varmistetaan, että osuttiin seinään
-            if (osuma) {
-                const osuttuPala = osuma.object;
-                const ryhma = osuttuPala.parent;
-                // Käytetään hoverBoxin sijaintia, koska se on jo laskettu nätisti metrin pätkälle
-                const keskiZ = hoverBox.position.z;
+    const intersects = raycaster.intersectObjects(groupDragObjects, true);
+    const osuma = intersects.find(i => i.object.userData.tyyppi === "seina");
+    
+    // Varmistetaan, että osuttiin seinään
+    if (osuma) {
+        const osuttuPala = osuma.object;
+        const ryhma = osuttuPala.parent;
+        // Käytetään hoverBoxin sijaintia, koska se on jo laskettu nätisti metrin pätkälle
+        const keskiZ = hoverBox.position.z;
 
-                // Suodatetaan poistettavat palat (HUOM: === vertailuun)
-                const poistettavat = ryhma.children.filter(child => 
-                    child.userData.tyyppi === "seina" && 
-                    Math.abs(child.position.z - keskiZ) < 0.6
-                );
+        // Suodatetaan poistettavat palat (HUOM: === vertailuun)
+        const poistettavat = ryhma.children.filter(child => 
+            child.userData.tyyppi === "seina" && 
+            Math.abs(child.position.z - keskiZ) < 0.6
+        );
 
-                // Jos löydettiin poistettavia paloja (eli tilaa ikkunalle)
-                if (poistettavat.length > 0) {
-                    poistettavat.forEach(p => ryhma.remove(p));
-                    lisaaIkkuna(ryhma, keskiZ);
-                }
+        // Jos löydettiin poistettavia paloja (eli tilaa ikkunalle)
+        if (poistettavat.length > 0) {
+            poistettavat.forEach(p => ryhma.remove(p));
+            
+            if (ikkunaRadio.checked) {
+                lisaaIkkuna(ryhma, keskiZ);
+            } else if (oviRadio.checked) {
+                lisaaOvi(ryhma, keskiZ)
             }
         }
     }
@@ -250,6 +257,38 @@ export function lisaaIkkuna(kohdeRyhma = null, zPos = 0.5) {
         groupDragObjects.push(isäntä);
         scene.add(isäntä);
         paivitaRaahaus();
+    }
+}
+
+export function lisaaOvi(kohdeRyhma, zPos) {
+    const isUusiOvi = !kohdeRyhma;
+    const isäntä = kohdeRyhma || new THREE.Group();
+
+    const oviElementit = new THREE.Group()
+
+    // 1/4 Ympyrä
+    const geometry = new THREE.CircleGeometry(1, 64, 0, Math.PI / 2)
+    const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, side: THREE.DoubleSide })
+    const circle = new THREE.Mesh(geometry, material)
+    geometry.rotateX(-Math.PI / 2);
+    circle.position.set(0.15, 0.01, 0.5)
+
+    //Pala seinää
+    const ylapalaGeo = new THREE.BoxGeometry(0.3, 0.4, 1.0);
+    const ylapalaMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
+    const ylapala = new THREE.Mesh(ylapalaGeo, ylapalaMat);
+    ylapala.position.y = 2.3;
+
+    oviElementit.add(circle, ylapala)
+
+    oviElementit.position.z = zPos;
+    oviElementit.userData.tyyppi = "ovi"
+
+    isäntä.add(oviElementit);
+
+    if (isUusiOvi) {
+        scene.add(isäntä)
+        paivitaRaahaus()
     }
 }
 

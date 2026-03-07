@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import { setupInputHandlers } from './inputHandler';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager } from './wallManager.js';
+import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi } from './wallManager.js';
 import { tallennaSeinatJSON } from './saveSetup.js';
 
 let activeCamera = camera3d;
@@ -60,6 +60,7 @@ function paivitaTila() {
     const katseluRadio = document.getElementById("katselutila");
     const piirtoRadio = document.getElementById("piirtotila");
     const ikkunaRadio = document.getElementById("ikkunatila");
+    const oviRadio = document.getElementById("ovitila");
 
     if (siirtelyRadio.checked) {
         dragControls.enabled = true;
@@ -119,6 +120,13 @@ function paivitaTila() {
         enableBtn();
     }
 
+    if (oviRadio.checked) {
+        dragControls.enabled = false;
+        groupDragControls.enabled = false;
+        setDrawing(false)
+        enableBtn();
+    }
+
     if (!piirtoRadio.checked) {
         setDrawing(false)
         if (currentWallGroup) {
@@ -133,6 +141,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const katselu = document.getElementById("katselutila");
     const piirto = document.getElementById("piirtotila");
     const ikkuna = document.getElementById("ikkunatila");
+    const ovi = document.getElementById("ovitila");
     
 
     if (siirtely) siirtely.addEventListener("change", paivitaTila);
@@ -142,6 +151,8 @@ window.addEventListener("DOMContentLoaded", () => {
     if (piirto) piirto.addEventListener("change", paivitaTila);
 
     if (ikkuna) ikkuna.addEventListener("change", paivitaTila);
+    
+    if (ovi) ovi.addEventListener("change", paivitaTila);
 
     //Sivun latautuessa automaattisesti katselutilaan
     if (katselu) katselu.checked = true;
