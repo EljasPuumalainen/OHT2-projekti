@@ -101,6 +101,17 @@ window.addEventListener("mousemove", (event) => {
             pala.userData.tyyppi = "seina"
 
             currentWallGroup.add(pala)
+
+            if (i === 0 || i === palojenMaara - 1) {
+                const tolppaGeo = new THREE.CylinderGeometry(0.15, 0.15, 2.5, 16);
+                const tolppa = new THREE.Mesh(tolppaGeo, material);
+        
+                // Jos i=0, tolppa on seinän alussa. Jos i=loppu, tolppa on seinän lopussa.
+                const zPos = (i === 0) ? (i * 0.5) : (i * 0.5) + 0.5;
+                tolppa.position.set(0, 1.25, zPos);
+                
+                currentWallGroup.add(tolppa);
+            }
         }
     }
 })
