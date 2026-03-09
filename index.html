@@ -27,6 +27,7 @@
       #piirto-wrap { top: 135px; }
       #ikkuna-wrap { top: 170px; }
       #ovi-wrap { top: 205px; }
+      #undo-wrap { top: 240px; }
 
       #sidebar {
         position: fixed;
@@ -74,6 +75,10 @@
       <label for="ovitila">Ovi</label>
     </div>
 
+    <div id="undo-wrap" class="menu-item" style="background: none;">
+      <button id="buttonUndo" title="Ctrl+Z">↩ Kumoa</button>
+    </div>
+
     <div id="sidebar">
       <p style="color: white;">Objektin kääntäminen onnistuu painamalla mouse2 pohjassa (objektin päällä) ja liikuttamalla hiirtä
                                   vaakasuunnassa
@@ -87,9 +92,21 @@
         klikkaamalla seinä muuttuu ikkunaksi
       </p>
       <p style="color: white">Oven lisäys toimii samalla tavalla kun ikkunan ja hiiren oikealla oven kätisyyttä voi kääntää</p>
-      
+      <p style="color: white">Undo onnistuu painamalla Kumoa nappia tai näppäimistöltä "Ctrl+Z"</p>
     </div>
-
     <script type="module" src="/main.js"></script>
+    <script>
+    document.getElementById('buttonUndo').addEventListener('click', () => {
+        document.dispatchEvent(new CustomEvent('undo'));
+    });
+
+      //Kumoa "Ctrl+Z"
+      document.addEventListener('keydown', (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            e.preventDefault();
+            document.dispatchEvent(new CustomEvent('undo'));
+       }
+      });
+    </script>
   </body>
 </html>

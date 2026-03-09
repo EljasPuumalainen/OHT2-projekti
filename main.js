@@ -3,8 +3,9 @@ import * as THREE from 'three';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import { setupInputHandlers } from './inputHandler';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi } from './wallManager.js';
+import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory } from './wallManager.js';
 import { tallennaSeinatJSON } from './saveSetup.js';
+
 
 let activeCamera = camera3d;
 
@@ -144,6 +145,38 @@ window.addEventListener("DOMContentLoaded", () => {
     const piirto = document.getElementById("piirtotila");
     const ikkuna = document.getElementById("ikkunatila");
     const ovi = document.getElementById("ovitila");
+
+    const undoWrap = document.getElementById("undo-wrap");
+    const showUndoModes = ['piirtotila', 'ikkunatila', 'ovitila'];
+
+    //Undo button näkyvyys: piirto, ikkuna ja ovi tiloissa
+    document.querySelectorAll('input[name="tila"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            undoWrap.style.display = showUndoModes.includes(e.target.value) ? 'block' : 'none';
+        });
+    });
+
+    undoWrap.style.display = 'none';
+    //Undo logiikka
+    document.addEventListener('undo', () => {
+        if (undoHistory.length === 0) return;
+
+        const last = undoHistory.pop();
+
+        if (last.type === "seina") {
+            scene.remove(last.object);
+            const idx = groupDragObjects.indexOf(last.object);
+            if (idx !== -1) groupDragObjects.splice(idx, 1);
+            paivitaRaahaus();
+        }
+
+        if (last.type === "ikkuna" || last.type === "ovi") {
+            const lisatty = last.ryhma.children.find(c => c.userData.tyyppi === last.type);
+            if (lisatty) last.ryhma.remove(lisatty);
+            last.poistettavat.forEach(p => last.ryhma.add(p));
+        }
+    });
+
     
 
     if (siirtely) siirtely.addEventListener("change", paivitaTila);
@@ -155,6 +188,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (ikkuna) ikkuna.addEventListener("change", paivitaTila);
     
     if (ovi) ovi.addEventListener("change", paivitaTila);
+
 
     //Sivun latautuessa automaattisesti katselutilaan
     if (katselu) katselu.checked = true;

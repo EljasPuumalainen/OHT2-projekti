@@ -6,6 +6,9 @@ import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
 export const dragObjects = [] 
 export const groupDragObjects = [];
 
+//Undo historia
+export const undoHistory = [];
+
 //Piirto toiminnot
 export let isDrawing = false;
 export let currentWallGroup = null;
@@ -121,6 +124,7 @@ window.addEventListener("mouseup", (event) => {
         //Jos seinä on alle 1m, sitä ei lisätä
         if (currentWallGroup && currentWallGroup.children.length >= 1) {
             groupDragObjects.push(currentWallGroup);
+            undoHistory.push({ type: "seina", object: currentWallGroup });
             paivitaRaahaus()
         } else if (currentWallGroup) {
             scene.remove(currentWallGroup)
@@ -220,8 +224,12 @@ window.addEventListener("mousedown", (event) => {
             
             if (ikkunaRadio.checked) {
                 lisaaIkkuna(ryhma, keskiZ);
+                //historiaan undo:ta varten
+                undoHistory.push({ type: "ikkuna", ryhma, keskiZ, poistettavat });
             } else if (oviRadio.checked) {
                 lisaaOvi(ryhma, keskiZ)
+                //historiaan undo:ta varten 
+                undoHistory.push({ type: "ovi", ryhma, keskiZ, poistettavat });
             }
         }
     }
