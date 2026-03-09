@@ -164,11 +164,13 @@ window.addEventListener("mousemove", (event) => {
             // Korostetaan kaksi palaa (1 metri) kerrallaan
             // Lasketaan mihin "metriin" osuttiin
             const zPos = osuttuPala.position.z;
-            const snapZ = Math.floor(zPos); // Esim. 0.25 tai 0.75 -> 0.5 keskipisteeksi
+            const snapZ = Math.floor(zPos);
 
             hoverBox.visible = true;
-            hoverBox.position.set(0, 1.25, snapZ + 0.5); // Asetetaan metrin pätkän keskelle
-            ryhma.add(hoverBox); // Kiinnitetään hover-laatikko ryhmään, jotta se kääntyy oikein
+            //TODO:
+            //snapZ vai snapZ + 0.5? Miten lähelle kulmaa ikkuna halutaan?
+            hoverBox.position.set(0, 1.25, snapZ);
+            ryhma.add(hoverBox);
         } else {
             hoverBox.visible = false;
         }
