@@ -173,7 +173,8 @@ window.addEventListener("mousemove", (event) => {
             hoverBox.visible = true;
             //TODO:
             //snapZ vai snapZ + 0.5? Miten lähelle kulmaa ikkuna halutaan?
-            hoverBox.position.set(0, 1.25, snapZ);
+            //Pakko melkein laittaa snapZ + 0.5 jotta ovi saadaa keskelle 5x5 piirrustuksessa, pitäää keksiä tuohon joko toinen ratkaisu
+            hoverBox.position.set(0, 1.25, snapZ + 0.5);
             ryhma.add(hoverBox);
         } else {
             hoverBox.visible = false;
