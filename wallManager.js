@@ -155,6 +155,8 @@ window.addEventListener("mousemove", (event) => {
         raycaster.setFromCamera(mouse, getActiveCamera());
         }
 
+        hoverBox.raycast = () => null;
+
         // Etsitään osumia kaikista seinäryhmien lapsista
         const allParts = [];
         groupDragObjects.forEach(group => allParts.push(...group.children));
@@ -162,27 +164,27 @@ window.addEventListener("mousemove", (event) => {
         const intersects = raycaster.intersectObjects(allParts);
 
         if (intersects.length > 0) {
-            const osuttuPala = intersects[0].object;
-            const ryhma = osuttuPala.parent;
+            const maailmaPiste = intersects[0].point;
+            const ryhma = intersects[0].object.parent;
+            
+            // Muutetaan maailman Z-koordinaatti ryhmän paikalliseksi koordinaatiksi
+            const paikallinenPiste = ryhma.worldToLocal(maailmaPiste.clone());
+            const zPos = paikallinenPiste.z;
 
-            // Korostetaan kaksi palaa (1 metri) kerrallaan
-            // Lasketaan mihin "metriin" osuttiin
-            const zPos = osuttuPala.position.z;
-            const snapZ = Math.floor(zPos);
+            // Nyt pyöristys toimii tarkan hiiren sijainnin mukaan 0.5m välein
+            const uusiPosz = Math.round(zPos * 2) / 2;
 
             hoverBox.visible = true;
-            //TODO:
-            //snapZ vai snapZ + 0.5? Miten lähelle kulmaa ikkuna halutaan?
-            //Pakko melkein laittaa snapZ + 0.5 jotta ovi saadaa keskelle 5x5 piirrustuksessa, pitäää keksiä tuohon joko toinen ratkaisu
-            hoverBox.position.set(0, 1.25, snapZ + 0.5);
+            hoverBox.position.z = uusiPosz;
+            hoverBox.position.y = 1.25;
+            hoverBox.position.x = 0;
+            hoverBox.renderOrder = 999;
+
             ryhma.add(hoverBox);
         } else {
             hoverBox.visible = false;
         }
-    } else {
-        hoverBox.visible = false;
     }
-    
 });
 
 window.addEventListener("mousedown", (event) => {
@@ -193,45 +195,43 @@ window.addEventListener("mousedown", (event) => {
 
     if (!ikkunaRadio?.checked && !oviRadio?.checked) return;
     
-    const mouse = new THREE.Vector2(
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
-        );
+    // Jos hoverBox ei ole näkyvissä, ei ole mitään mihin sijoittaa
+    if (!hoverBox.visible) return;
 
-    const raycaster = new THREE.Raycaster();
-    if (getActiveCamera) {
-        raycaster.setFromCamera(mouse, getActiveCamera());
-        }
-        
-    const intersects = raycaster.intersectObjects(groupDragObjects, true);
-    const osuma = intersects.find(i => i.object.userData.tyyppi === "seina");
-    
-    // Varmistetaan, että osuttiin seinään
-    if (osuma) {
-        const osuttuPala = osuma.object;
-        const ryhma = osuttuPala.parent;
-        // Käytetään hoverBoxin sijaintia, koska se on jo laskettu nätisti metrin pätkälle
-        const keskiZ = hoverBox.position.z;
+    // OTETAAN RYHMÄ JA SIJAINTI SUORAAN HOVERBOXILTA
+    // Tämä takaa, että ikkuna menee TÄSMÄLLEEN siihen missä esikatselu on
+    const ryhma = hoverBox.parent; 
+    const keskiZ = hoverBox.position.z;
 
-        // Suodatetaan poistettavat palat (HUOM: === vertailuun)
+    if (ryhma) {
+        // Suodatetaan poistettavat palat. 
+        // Nostetaan etäisyyttä hieman (0.6 -> 0.7), jotta se nappaa varmasti 
+        // kaksi 0.5m palaa vaikka ne olisivat hieman epätarkasti sijoitettu
         const poistettavat = ryhma.children.filter(child => 
-            child.userData.tyyppi === "seina" && 
-            Math.abs(child.position.z - keskiZ) < 0.6
+            (child.userData.tyyppi === "seina" || child.userData.tyyppi === "tolppa") && 
+            Math.abs(child.position.z - keskiZ) < 0.74
         );
 
-        // Jos löydettiin poistettavia paloja (eli tilaa ikkunalle)
+        // Sallitaan sijoitus, jos ollaan seinän päällä (poistettavia löytyy)
+        // TAI jos haluat sallia sijoituksen tyhjään (poista tämä ehto)
         if (poistettavat.length > 0) {
             poistettavat.forEach(p => ryhma.remove(p));
             
             if (ikkunaRadio.checked) {
                 lisaaIkkuna(ryhma, keskiZ);
-                //historiaan undo:ta varten
                 undoHistory.push({ type: "ikkuna", ryhma, keskiZ, poistettavat });
             } else if (oviRadio.checked) {
-                lisaaOvi(ryhma, keskiZ)
-                //historiaan undo:ta varten 
+                lisaaOvi(ryhma, keskiZ);
                 undoHistory.push({ type: "ovi", ryhma, keskiZ, poistettavat });
             }
+            
+            // Piilotetaan hoverBox hetkeksi, jotta se lasketaan uudelleen seuraavassa liikkeessä
+            hoverBox.visible = false;
+        } else {
+            console.warn("Ei seinäpaloja kohdalla!", {
+                etsittyKeskiZ: keskiZ,
+                ryhmanLapsia: ryhma.children.length
+            });
         }
     }
 });
@@ -339,20 +339,24 @@ export function setupTurnOvi(getCamera) {
                 raycaster.setFromCamera(mouse, getActiveCamera());
             }
 
-            //Tarkistus osuuko säde johonkin objektiin
             const intersects = raycaster.intersectObjects(scene.children, true);
             if (intersects.length > 0) {
                 let hitObject = intersects[0].object;
 
-                if (hitObject === grid || hitObject === grid2 || hitObject === drawingPlane)
-                    return
-                // Jos seinä kuuluu ryhmään, valitaan koko ryhmä käännettäväksi
-                let topObject = hitObject;
-                while (topObject.parent && topObject.parent !== scene) {
-                    topObject = topObject.parent;
+                // Etsitään klikatusta objektista tai sen vanhemmista se, jolla on tyyppi "ovi"
+                let oviElementti = null;
+                let tarkistettava = hitObject;
+                
+                // "Kiivetään" ylöspäin vain osumasta, kunnes löytyy ovi tai tullaan sceneen asti
+                while (tarkistettava && tarkistettava !== scene) {
+                    if (tarkistettava.userData && tarkistettava.userData.tyyppi === "ovi") {
+                        oviElementti = tarkistettava;
+                        break;
+                    }
+                    tarkistettava = tarkistettava.parent;
                 }
 
-                const oviElementti = topObject.children.find(c => c.userData.tyyppi === "ovi");
+                
 
 
                 if (oviElementti) {
