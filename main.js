@@ -5,6 +5,7 @@ import { setupInputHandlers } from './inputHandler';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory } from './wallManager.js';
 import { tallennaSeinatJSON } from './saveSetup.js';
+import { initLabelManager, paivitaLabelit } from './labelManager.js';
 
 
 let activeCamera = camera3d;
@@ -45,6 +46,8 @@ paivitaRaahaus()
 setDrawing(true)
 
 initWallManager(() => activeCamera)
+
+initLabelManager(() => activeCamera)
 
 setupTurnEvents(() => activeCamera)
 
@@ -165,6 +168,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
         if (last.type === "seina") {
             scene.remove(last.object);
+            if (last.object.userData.label){
+                last.object.userData.label.remove();
+            }
             const idx = groupDragObjects.indexOf(last.object);
             if (idx !== -1) groupDragObjects.splice(idx, 1);
             paivitaRaahaus();
@@ -250,8 +256,9 @@ function animate() {
 
     if (dragControls) dragControls.camera = activeCamera;
 
-    controls3D.update()
-    controls2D.update()
+    controls3D.update();
+    controls2D.update();
+    paivitaLabelit();
     renderer.render( scene, activeCamera );
 }
 
