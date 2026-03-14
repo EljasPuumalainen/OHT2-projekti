@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
+import { createWallLabel } from './labelManager.js';
 
 
 export const dragObjects = [] 
@@ -125,6 +126,7 @@ window.addEventListener("mouseup", (event) => {
         if (currentWallGroup && currentWallGroup.children.length >= 1) {
             groupDragObjects.push(currentWallGroup);
             undoHistory.push({ type: "seina", object: currentWallGroup });
+            createWallLabel(currentWallGroup);
             paivitaRaahaus()
         } else if (currentWallGroup) {
             scene.remove(currentWallGroup)
