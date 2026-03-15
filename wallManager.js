@@ -23,6 +23,13 @@ export function initWallManager(cameraGetter) {
     getActiveCamera = cameraGetter;
 }
 
+//Otetaan hiiren paikka talteen - käytetään reunojen scrollaamiseen seinää piirtäessä
+export let mouseScreenPos = { x: 0, y: 0 };
+window.addEventListener("mousemove", (event) => {
+    mouseScreenPos.x = event.clientX;
+    mouseScreenPos.y = event.clientY;
+});
+
 window.addEventListener("mousedown", (event) => {
 
     if (event.clientX < 300 && event.clientY < 400) {
@@ -89,6 +96,7 @@ window.addEventListener("mousemove", (event) => {
         const pituus = Math.max(0.5, Math.round(distance * 2) / 2)
         const palojenMaara = pituus / 0.5;
 
+        // Lisää pituuselementin seinää piirtäessä
         const label = document.getElementById("mittausLabel");
         label.textContent = pituus.toFixed(1) + " m";
         label.style.left = event.clientX + 15 + "px";
