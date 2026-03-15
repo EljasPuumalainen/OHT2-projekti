@@ -95,6 +95,7 @@ window.addEventListener("mousemove", (event) => {
         label.style.top = event.clientY - 20 + "px";
         label.style.display = "block";
         
+        console.log("Kulma", angle)
 
         while (currentWallGroup.children.length > 0) {
             currentWallGroup.remove(currentWallGroup.children[0])
@@ -127,6 +128,11 @@ window.addEventListener("mousemove", (event) => {
 
 window.addEventListener("mouseup", (event) => {
     if (event.button === 0 && isDrawing) {
+
+        if (currentWallGroup && document.getElementById("mittausLabel")) {
+            document.getElementById("mittausLabel").style.display = "none"
+        }
+
         //Jos seinä on alle 1m, sitä ei lisätä
         if (currentWallGroup && currentWallGroup.children.length >= 1) {
             groupDragObjects.push(currentWallGroup);
