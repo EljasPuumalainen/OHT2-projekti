@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
-import { createWallLabel } from './labelManager.js';
 
 
 export const dragObjects = [] 
@@ -89,6 +88,12 @@ window.addEventListener("mousemove", (event) => {
 
         const pituus = Math.max(0.5, Math.round(distance * 2) / 2)
         const palojenMaara = pituus / 0.5;
+
+        const label = document.getElementById("mittausLabel");
+        label.textContent = pituus.toFixed(1) + " m";
+        label.style.left = event.clientX + 15 + "px";
+        label.style.top = event.clientY - 20 + "px";
+        label.style.display = "block";
         
 
         while (currentWallGroup.children.length > 0) {
@@ -126,7 +131,6 @@ window.addEventListener("mouseup", (event) => {
         if (currentWallGroup && currentWallGroup.children.length >= 1) {
             groupDragObjects.push(currentWallGroup);
             undoHistory.push({ type: "seina", object: currentWallGroup });
-            createWallLabel(currentWallGroup);
             paivitaRaahaus()
         } else if (currentWallGroup) {
             scene.remove(currentWallGroup)
