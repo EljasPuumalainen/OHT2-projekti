@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import { setupInputHandlers } from './inputHandler';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory } from './wallManager.js';
+import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaSeinatJSON } from './saveSetup.js';
 
 
@@ -249,6 +249,27 @@ function animate() {
     requestAnimationFrame(animate);
 
     if (dragControls) dragControls.camera = activeCamera;
+
+    // Reunan liikkuminen seinää piirtäessä
+    if (isDrawing && currentWallGroup) {  
+        const edgeSize = 80;
+        const panSpeed = 0.08;
+
+        const dx =
+            mouseScreenPos.x < edgeSize ? -panSpeed :
+            mouseScreenPos.x > window.innerWidth - edgeSize ? panSpeed : 0;
+
+        const dz =
+            mouseScreenPos.y < edgeSize ? -panSpeed :
+            mouseScreenPos.y > window.innerHeight - edgeSize ? panSpeed : 0;
+
+        if (dx !== 0 || dz !== 0) {
+            camera2d.position.x += dx;
+            camera2d.position.z += dz;
+            controls2D.target.x += dx;
+            controls2D.target.z += dz;
+        }
+    }
 
     controls3D.update()
     controls2D.update()
