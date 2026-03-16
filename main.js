@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 
 import { DragControls } from 'three/addons/controls/DragControls.js';
+
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
-import { tallennaSeinatJSON } from './saveSetup.js';
+import { tallennaJSON, lataaJSON } from './filemanager.js';
 
 
 let activeCamera = camera3d;
@@ -153,6 +154,8 @@ window.addEventListener("DOMContentLoaded", () => {
         radio.addEventListener('change', (e) => {
             undoWrap.style.display = showUndoModes.includes(e.target.value) ? 'block' : 'none';
         });
+
+    
     });
 
     undoWrap.style.display = 'none';
@@ -191,6 +194,25 @@ window.addEventListener("DOMContentLoaded", () => {
 
     //Sivun latautuessa automaattisesti katselutilaan
     if (katselu) katselu.checked = true;
+
+
+
+    const saveBtn = document.getElementById('buttonSave');
+    const loadInput = document.getElementById('lataaTiedosto');
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', tallennaJSON);
+    }
+
+    if (loadInput) {
+        loadInput.addEventListener('change', (e) => {
+            lataaJSON(e);
+            // Pieni viive latauksen jälkeen, jotta raahaus saadaan päälle uusille seinille
+            setTimeout(() => {
+                paivitaRaahaus();
+            }, 100);
+        });
+    }
 
     paivitaTila();
 })
@@ -242,6 +264,8 @@ export function paivitaRaahaus() {
     console.log(`%c[System] Raahaus päivitetty. Seiniä: ${dragObjects.length}, Ryhmiä: ${groupDragObjects.length}`, "color: #27ae60");
 }
 
+
+
 function animate() {
     requestAnimationFrame(animate);
 
@@ -273,6 +297,5 @@ function animate() {
     renderer.render( scene, activeCamera );
 }
 
-tallennaSeinatJSON()
 
 animate();
