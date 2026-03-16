@@ -80,19 +80,21 @@ window.addEventListener("mousemove", (event) => {
     const intersects = raycaster.intersectObject(drawingPlane)
 
     if (intersects.length > 0) {
-        const endPoint = intersects[0].point;
+        const rawPoint = intersects[0].point;
 
-        endPoint.x = Math.round(endPoint.x * 2) / 2;
-        endPoint.z = Math.round(endPoint.z * 2) / 2;
-
-        const distance = startPoint.distanceTo(endPoint);
-        let angle = Math.atan2(endPoint.x - startPoint.x, endPoint.z - startPoint.z);
+        let angle = Math.atan2(rawPoint.x - startPoint.x, rawPoint.z - startPoint.z);
 
         //2.5 Asteen lukitus piirtäessä
         const step = 2.5 * (Math.PI / 180);
         angle = Math.round(angle / step) * step;
         currentWallGroup.rotation.y = angle;
+        
+        const endPoint = rawPoint.clone()
+        endPoint.x = Math.round(endPoint.x * 2) / 2;
+        endPoint.z = Math.round(endPoint.z * 2) / 2;
 
+        const distance = startPoint.distanceTo(endPoint);
+    
         const pituus = Math.max(0.5, Math.round(distance * 2) / 2)
         const palojenMaara = pituus / 0.5;
 
@@ -102,8 +104,6 @@ window.addEventListener("mousemove", (event) => {
         label.style.left = event.clientX + 15 + "px";
         label.style.top = event.clientY - 20 + "px";
         label.style.display = "block";
-        
-        console.log("Kulma", angle)
 
         while (currentWallGroup.children.length > 0) {
             currentWallGroup.remove(currentWallGroup.children[0])

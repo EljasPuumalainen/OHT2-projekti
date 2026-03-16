@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 
 import { DragControls } from 'three/addons/controls/DragControls.js';
-import { setupInputHandlers } from './inputHandler';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaSeinatJSON } from './saveSetup.js';
@@ -242,8 +241,6 @@ export function paivitaRaahaus() {
 
     console.log(`%c[System] Raahaus päivitetty. Seiniä: ${dragObjects.length}, Ryhmiä: ${groupDragObjects.length}`, "color: #27ae60");
 }
-
-setupInputHandlers(scene, dragObjects, groupDragObjects, () => activeCamera);
 
 function animate() {
     requestAnimationFrame(animate);
