@@ -312,7 +312,7 @@ export function lisaaOvi(kohdeRyhma, zPos) {
     const geometry = new THREE.CircleGeometry(1, 64, 0, Math.PI / 2)
     const material = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, side: THREE.DoubleSide })
     const circle = new THREE.Mesh(geometry, material)
-    geometry.rotateX(-Math.PI / 2);
+    circle.rotation.x = -Math.PI / 2;
     circle.position.set(0.15, 0.01, 0.5)
 
     const ylapalaGeo = new THREE.BoxGeometry(0.3, 0.4, 1.0);
