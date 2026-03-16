@@ -1,41 +1,29 @@
 import { dragObjects, groupDragObjects } from "./wallManager";
 import * as THREE from 'three';
 import { scene } from './sceneSetup.js';
+import { paivitaRaahaus } from './main.js';
 
 // ---Tallennus-------
 
 export function tallennaJSON() {
-    // Suodatetaan vain ne objektit, jotka ovat seiniä
-    // Oletetaan, että seinät ovat groupDragObjects-taulukossa
+    // 1. Otetaan vain seinäryhmät
     const seinat = groupDragObjects.filter(group => {
-        // Varmistetaan, että ryhmän sisältä löytyy jotain, missä on tyyppi: "seina"
         return group.children.some(c => c.userData.tyyppi === "seina");
     });
 
-    // Luodaan objekti, joka sisältää datan
-    const exportData = seinat.map((group, index) => {
+    // 2. Tehdään minimalistinen paketti
+    const exportData = seinat.map((group) => {
         return {
-            metadata: { version: 1, type: 'WallExport' },
-            id: group.uuid, // Käytetään UUID:tä, se on varmempi kuin index
-            nimi: group.name || `Seina_${index}`,
-            position: group.position.toArray(), // Muuttaa [x, y, z] muotoon
-            rotation: group.rotation.toArray().slice(0, 3), // [x, y, z]
-            scale: group.scale.toArray(),
-            
-            // Jos haluat tallentaa myös Three.js-geometrian ja materiaalin:
+            // group.toJSON() sisältää jo kaiken: position, rotation, scalen ja lapset (ovet/ikkunat)
             threeData: group.toJSON() 
         };
     });
 
     const jsonString = JSON.stringify(exportData, null, 2);
-
+    downloadJSON(jsonString, "seinat.json");
     console.log("--------------- SEINÄT TALLENNETTU ---------------");
     console.log(jsonString);
-
-
     
-    // Vinkki: Voit myös ladata tämän suoraan tiedostona koneelle:
-    downloadJSON(jsonString, "seinat.json");
 }
 
 function downloadJSON(jsonString, fileName) {
@@ -72,26 +60,28 @@ export function lataaJSON(event) {
         const data = JSON.parse(e.target.result);
         const loader = new THREE.ObjectLoader();
 
-        // Tyhjennetään nykyiset (valinnainen: jos haluat korvata vanhat)
-        // groupDragObjects.length = 0; 
-        // dragObjects.length = 0;
+        // --- SIIVOUS: Poistetaan vanhat ---
+        groupDragObjects.forEach(group => scene.remove(group));
+        groupDragObjects.length = 0; 
+        dragObjects.length = 0;
 
+        // --- LATAUS: Luodaan uudet ---
         data.forEach(item => {
-            // Luodaan Three.js objekti takaisin datasta
+            // loader.parse palauttaa täydellisen ryhmän kaikkine asetuksineen
             const ladattuRyhma = loader.parse(item.threeData);
             
-            // Lisätään se sceneen ja hallintataulukoihin
             scene.add(ladattuRyhma);
             groupDragObjects.push(ladattuRyhma);
             
-            // TÄRKEÄÄ: Lisätään ryhmän lapset (itse seinä-meshit) dragObjects-listaan
-            // jotta niitä voi taas raahata hiirellä
+            // Rekisteröidään lapset (seinät/ovet), jotta niitä voi raahata
             ladattuRyhma.children.forEach(child => {
                 dragObjects.push(child);
             });
         });
 
-        console.log("Seinät ladattu ja aktivoitu!");
+        // Tärkeää: Aktivoi raahaus uudestaan latauksen jälkeen
+        paivitaRaahaus(); 
+        console.log("Lataus valmis ja raahaus aktivoitu!");
     };
     lukija.readAsText(tiedosto);
 }
