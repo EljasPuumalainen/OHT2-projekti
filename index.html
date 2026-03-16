@@ -28,6 +28,11 @@
       #ikkuna-wrap { top: 170px; }
       #ovi-wrap { top: 205px; }
       #undo-wrap { top: 240px; }
+      #save-wrap { top: 275px; }
+      #load-wrap { 
+          top: 310px; 
+          cursor: pointer;
+      }
 
       #sidebar {
         position: fixed;
@@ -43,6 +48,24 @@
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         font-size: 15px;
       }
+
+      .custom-file-upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: #f0f0f0; /* Tai se väri mitä käytät muissa napeissa */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: sans-serif;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .custom-file-upload:hover {
+    background-color: #e0e0e0; /* Tummuu hieman kun hiiri on päällä */
+}
 
 
     </style>
@@ -78,6 +101,17 @@
     <div id="undo-wrap" class="menu-item" style="background: none;">
       <button id="buttonUndo" title="Ctrl+Z">↩ Kumoa</button>
     </div>
+
+    <div id="save-wrap" class="menu-item" style="background: none;">
+    <button id="buttonSave" title="Tallenna (S)">💾 Tallenna</button>
+  </div>
+
+  <div id="load-wrap" class="menu-item" style="background: none;">
+    <label for="lataaTiedosto" class="custom-file-upload" title="Lataa (L)">
+        📂 Lataa
+    </label>
+    <input type="file" id="lataaTiedosto" accept=".json" style="display: none;">
+  </div>
 
     <div id="mittausLabel" style="
     position:fixed;
