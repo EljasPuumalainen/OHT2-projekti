@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
+import { distance } from 'three/tsl';
 
 
 export const dragObjects = [] 
@@ -154,18 +155,28 @@ window.addEventListener("mouseup", (event) => {
     }
 })
 
-//Ikkunan lisäys toiminnot
+//Korostus toiminnot
 export const hoverBoxGeo = new THREE.BoxGeometry(0.31, 2.51, 1.01);
 export const hoverBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBox = new THREE.Mesh(hoverBoxGeo, hoverBoxMat);
+
 scene.add(hoverBox);
 hoverBox.visible = false;
+
+const hoverBoxSeinaGeo = new THREE.BoxGeometry(0.31, 2.51, 1.01); 
+const hoverBoxSeinaMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
+export const hoverBoxSeina = new THREE.Mesh(hoverBoxSeinaGeo, hoverBoxSeinaMat);
+hoverBoxSeina.visible = false;
 
 window.addEventListener("mousemove", (event) => {
     const ikkunaTilaPaalla = document.getElementById("ikkunatila").checked;
     const oviTilaPaalla = document.getElementById("ovitila").checked;
+    const siirtelyTilaPaalla = document.getElementById("siirtelytila").checked;
+
+    hoverBox.visible = false;
+    hoverBoxSeina.visible = false;
     
-    if (ikkunaTilaPaalla || oviTilaPaalla) {
+    if (ikkunaTilaPaalla || oviTilaPaalla || siirtelyTilaPaalla) {
         const mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
@@ -176,6 +187,7 @@ window.addEventListener("mousemove", (event) => {
         }
 
         hoverBox.raycast = () => null;
+        hoverBoxSeina.raycast = () => null;
 
         // Etsitään osumia kaikista seinäryhmien lapsista
         const allParts = [];
@@ -184,29 +196,52 @@ window.addEventListener("mousemove", (event) => {
         const intersects = raycaster.intersectObjects(allParts);
 
         if (intersects.length > 0) {
-            const maailmaPiste = intersects[0].point;
             const ryhma = intersects[0].object.parent;
+
+            if (siirtelyTilaPaalla) {
+
+                const seinaPalat = ryhma.children.filter(lapsi => lapsi.userData && lapsi.userData.tyyppi === "seina");
+                const palojenMaara = seinaPalat.length;
+                const seinanPituus = palojenMaara * 0.5;
+
+                hoverBoxSeina.scale.z = seinanPituus;
+                hoverBoxSeina.visible = true;
+                hoverBoxSeina.position.z = seinanPituus / 2;
+                hoverBoxSeina.position.y = 1.25;
+                hoverBoxSeina.position.x = 0;
+                hoverBoxSeina.renderOrder = 999;
+
+                if (hoverBoxSeina.parent !== ryhma) {
+                    ryhma.add(hoverBoxSeina);
+                }
+
+            } else if (ikkunaTilaPaalla || oviTilaPaalla) {
             
-            // Muutetaan maailman Z-koordinaatti ryhmän paikalliseksi koordinaatiksi
-            const paikallinenPiste = ryhma.worldToLocal(maailmaPiste.clone());
-            const zPos = paikallinenPiste.z;
+                // Muutetaan maailman Z-koordinaatti ryhmän paikalliseksi koordinaatiksi
+                const maailmaPiste = intersects[0].point;
+                const paikallinenPiste = ryhma.worldToLocal(maailmaPiste.clone());
+                const zPos = paikallinenPiste.z;
 
-            // Nyt pyöristys toimii tarkan hiiren sijainnin mukaan 0.5m välein
-            const uusiPosz = Math.round(zPos * 2) / 2;
+                // Nyt pyöristys toimii tarkan hiiren sijainnin mukaan 0.5m välein
+                const uusiPosz = Math.round(zPos * 2) / 2;
 
-            hoverBox.visible = true;
-            hoverBox.position.z = uusiPosz;
-            hoverBox.position.y = 1.25;
-            hoverBox.position.x = 0;
-            hoverBox.renderOrder = 999;
+                hoverBox.visible = true;
+                hoverBox.position.z = uusiPosz;
+                hoverBox.position.y = 1.25;
+                hoverBox.position.x = 0;
+                hoverBox.renderOrder = 999;
 
-            ryhma.add(hoverBox);
-        } else {
-            hoverBox.visible = false;
+                ryhma.add(hoverBox);
+            }
+        }
+        if (event.buttons === 1 && siirtelyTilaPaalla) {
+            // Jos nappi on pohjassa, älä anna visible-tilan muuttua falseksi
+            hoverBoxSeina.visible = (hoverBoxSeina.parent !== null); 
         }
     }
 });
 
+//Ikkunan lisäys toiminnot
 window.addEventListener("mousedown", (event) => {
     if (event.button !== 0) return;
 
