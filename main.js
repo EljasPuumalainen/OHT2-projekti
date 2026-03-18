@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
+import { setupTurnEvents, setupDeleteEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
 
 
@@ -49,6 +49,8 @@ initWallManager(() => activeCamera)
 setupTurnEvents(() => activeCamera)
 
 setupTurnOvi(() => activeCamera)
+
+setupDeleteEvents()
 
 function disableBtn() {
     document.getElementById("buttonCamera").disabled = true;
@@ -177,6 +179,24 @@ window.addEventListener("DOMContentLoaded", () => {
             if (lisatty) last.ryhma.remove(lisatty);
             last.poistettavat.forEach(p => last.ryhma.add(p));
         }
+
+            if (last.type === "poisto") {
+        if (last.parent) {
+            last.parent.add(last.object);
+        } else {
+            scene.add(last.object);
+        }
+
+        if (last.indexInGroupDrag !== -1) {
+            groupDragObjects.push(last.object);
+        }
+
+        if (last.indexInDrag !== -1) {
+            dragObjects.push(last.object);
+        }
+
+        paivitaRaahaus();
+    }
     });
 
     
