@@ -33,6 +33,8 @@
           top: 310px; 
           cursor: pointer;
       }
+      #suorakaide-wrap { top: 345px; }
+      #sylinteri-wrap { top: 380px; }
 
       #sidebar {
         position: fixed;
@@ -113,6 +115,14 @@
     <input type="file" id="lataaTiedosto" accept=".json" style="display: none;">
   </div>
 
+  <div id="suorakaide-wrap" class="menu-item" style="background: none;">
+    <button id="btnSuorakaide">Lisää suorakaide</button>
+  </div>
+
+  <div id="sylinteri-wrap" class="menu-item" style="background: none;">
+    <button id="btnSylinteri">Lisää sylinteri</button>
+  </div>
+
     <div id="mittausLabel" style="
     position:fixed;
     background:white;
@@ -121,7 +131,31 @@
     padding:4px 8px;
     border-radius:10px;
     pointer-events:none;
-    display:none"></div>
+    display:none">
+    </div>
+
+  <div id="primitiiviModal" style="display:none; position:fixed; top:50%; left:50%;
+      transform:translate(-50%,-50%); background:#222; color:white; padding:24px;
+      border-radius:8px; z-index:1000; min-width:260px; font-family:Arial">
+  
+    <h3 id="modalOtsikko" style="margin-top:0"></h3>
+  
+    <label>Nimi: <input id="pNimi" type="text" style="width:100%"></label><br><br>
+  
+    <div id="suorakaideKentat">
+      <label>Leveys (m): <input id="pLeveys" type="number" value="1" step="0.5" style="width:100%"></label><br><br>
+      <label>Syvyys (m): <input id="pSyvyys" type="number" value="1" step="0.5" style="width:100%"></label><br><br>
+      <label>Korkeus (m): <input id="pKorkeus" type="number" value="2.5" step="0.5" style="width:100%"></label>
+    </div>
+
+    <div id="sylinteriKentat" style="display:none">
+      <label>Halkaisija (m): <input id="pHalkaisija" type="number" value="0.5" step="0.1" style="width:100%"></label><br><br>
+      <label>Korkeus (m): <input id="pSylKorkeus" type="number" value="2.5" step="0.5" style="width:100%"></label>
+    </div><br>
+
+    <button id="modalOK" style="margin-right:8px">Lisää</button>
+    <button id="modalPeruuta">Peruuta</button>
+  </div>
 
     <div id="sidebar">
       <p style="color: white;">Objektin kääntäminen onnistuu painamalla mouse2 pohjassa (objektin päällä) ja liikuttamalla hiirtä
