@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
+import { setupTurnEvents, setupDeleteEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
 import { lisaaSuorakaide, lisaaSylinteri } from './objectManager.js';
 
@@ -50,6 +50,8 @@ initWallManager(() => activeCamera)
 setupTurnEvents(() => activeCamera)
 
 setupTurnOvi(() => activeCamera)
+
+setupDeleteEvents()
 
 function disableBtn() {
     document.getElementById("buttonCamera").disabled = true;
@@ -187,12 +189,32 @@ window.addEventListener("DOMContentLoaded", () => {
             last.poistettavat.forEach(p => last.ryhma.add(p));
         }
 
+
         if (last.type === "primitiivi") {
             scene.remove(last.object);
             const idx = groupDragObjects.indexOf(last.object);
             if (idx !== -1) groupDragObjects.splice(idx, 1);
             paivitaRaahaus();
         }
+      
+        if (last.type === "poisto") {
+          if (last.parent) {
+            last.parent.add(last.object);
+        } else {
+            scene.add(last.object);
+        }
+
+        if (last.indexInGroupDrag !== -1) {
+            groupDragObjects.push(last.object);
+        }
+
+        if (last.indexInDrag !== -1) {
+            dragObjects.push(last.object);
+        }
+
+        paivitaRaahaus();
+    }
+      
     });
 
     //Logiikka sylintereille ja suorakaiteille
@@ -229,6 +251,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     modalPeruuta.addEventListener('click', () => {
         document.getElementById('primitiiviModal').style.display = 'none';
+
     });
 
 
