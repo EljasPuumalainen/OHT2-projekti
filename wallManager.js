@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
+import { distance } from 'three/tsl';
 
 
 export const dragObjects = [] 
@@ -154,18 +155,28 @@ window.addEventListener("mouseup", (event) => {
     }
 })
 
-//Ikkunan lisäys toiminnot
+//Korostus toiminnot
 export const hoverBoxGeo = new THREE.BoxGeometry(0.31, 2.51, 1.01);
 export const hoverBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBox = new THREE.Mesh(hoverBoxGeo, hoverBoxMat);
+
 scene.add(hoverBox);
 hoverBox.visible = false;
+
+const hoverBoxSeinaGeo = new THREE.BoxGeometry(0.31, 2.51, 1.01); 
+const hoverBoxSeinaMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
+export const hoverBoxSeina = new THREE.Mesh(hoverBoxSeinaGeo, hoverBoxSeinaMat);
+hoverBoxSeina.visible = false;
 
 window.addEventListener("mousemove", (event) => {
     const ikkunaTilaPaalla = document.getElementById("ikkunatila").checked;
     const oviTilaPaalla = document.getElementById("ovitila").checked;
+    const siirtelyTilaPaalla = document.getElementById("siirtelytila").checked;
+
+    hoverBox.visible = false;
+    hoverBoxSeina.visible = false;
     
-    if (ikkunaTilaPaalla || oviTilaPaalla) {
+    if (ikkunaTilaPaalla || oviTilaPaalla || siirtelyTilaPaalla) {
         const mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
@@ -176,6 +187,7 @@ window.addEventListener("mousemove", (event) => {
         }
 
         hoverBox.raycast = () => null;
+        hoverBoxSeina.raycast = () => null;
 
         // Etsitään osumia kaikista seinäryhmien lapsista
         const allParts = [];
@@ -184,29 +196,52 @@ window.addEventListener("mousemove", (event) => {
         const intersects = raycaster.intersectObjects(allParts);
 
         if (intersects.length > 0) {
-            const maailmaPiste = intersects[0].point;
             const ryhma = intersects[0].object.parent;
+
+            if (siirtelyTilaPaalla) {
+
+                const seinaPalat = ryhma.children.filter(lapsi => lapsi.userData && lapsi.userData.tyyppi === "seina");
+                const palojenMaara = seinaPalat.length;
+                const seinanPituus = palojenMaara * 0.5;
+
+                hoverBoxSeina.scale.z = seinanPituus;
+                hoverBoxSeina.visible = true;
+                hoverBoxSeina.position.z = seinanPituus / 2;
+                hoverBoxSeina.position.y = 1.25;
+                hoverBoxSeina.position.x = 0;
+                hoverBoxSeina.renderOrder = 999;
+
+                if (hoverBoxSeina.parent !== ryhma) {
+                    ryhma.add(hoverBoxSeina);
+                }
+
+            } else if (ikkunaTilaPaalla || oviTilaPaalla) {
             
-            // Muutetaan maailman Z-koordinaatti ryhmän paikalliseksi koordinaatiksi
-            const paikallinenPiste = ryhma.worldToLocal(maailmaPiste.clone());
-            const zPos = paikallinenPiste.z;
+                // Muutetaan maailman Z-koordinaatti ryhmän paikalliseksi koordinaatiksi
+                const maailmaPiste = intersects[0].point;
+                const paikallinenPiste = ryhma.worldToLocal(maailmaPiste.clone());
+                const zPos = paikallinenPiste.z;
 
-            // Nyt pyöristys toimii tarkan hiiren sijainnin mukaan 0.5m välein
-            const uusiPosz = Math.round(zPos * 2) / 2;
+                // Nyt pyöristys toimii tarkan hiiren sijainnin mukaan 0.5m välein
+                const uusiPosz = Math.round(zPos * 2) / 2;
 
-            hoverBox.visible = true;
-            hoverBox.position.z = uusiPosz;
-            hoverBox.position.y = 1.25;
-            hoverBox.position.x = 0;
-            hoverBox.renderOrder = 999;
+                hoverBox.visible = true;
+                hoverBox.position.z = uusiPosz;
+                hoverBox.position.y = 1.25;
+                hoverBox.position.x = 0;
+                hoverBox.renderOrder = 999;
 
-            ryhma.add(hoverBox);
-        } else {
-            hoverBox.visible = false;
+                ryhma.add(hoverBox);
+            }
+        }
+        if (event.buttons === 1 && siirtelyTilaPaalla) {
+            // Jos nappi on pohjassa, älä anna visible-tilan muuttua falseksi
+            hoverBoxSeina.visible = (hoverBoxSeina.parent !== null); 
         }
     }
 });
 
+//Ikkunan lisäys toiminnot
 window.addEventListener("mousedown", (event) => {
     if (event.button !== 0) return;
 
@@ -487,4 +522,146 @@ export function setupTurnEvents(getCamera) {
             selectedObject = null;
         }
     })
+}
+
+export function setupDeleteEvents() {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    let selectedObject = null;
+
+    function isProtectedObject(obj) {
+        return (
+            obj === grid ||
+            obj === grid2 ||
+            obj === drawingPlane ||
+            obj === hoverBox ||
+            obj === hoverBoxSeina
+        );
+    }
+
+    function getTopLevelObject(hitObject) {
+        let topObject = hitObject;
+
+        while (topObject.parent && topObject.parent !== scene) {
+            topObject = topObject.parent;
+        }
+
+        return topObject;
+    }
+
+    console.log("[Poisto] setupDeleteEvents alustettu");
+
+    window.addEventListener("mousedown", function(event) {
+        console.log("[Poisto] mousedown havaittu", {
+            button: event.button
+        });
+
+        const siirtelyRadio = document.getElementById("siirtelytila");
+        console.log("[Poisto] siirtelyRadio löytyi:", !!siirtelyRadio);
+        console.log("[Poisto] siirtelytila checked:", siirtelyRadio?.checked);
+
+        if (!siirtelyRadio || !siirtelyRadio.checked) {
+            console.log("[Poisto] Ei siirtelytilassa");
+            return;
+        }
+
+        if (event.button !== 0) {
+            console.log("[Poisto] Ei vasen klikkaus");
+            return;
+        }
+
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        const activeCam = getActiveCamera ? getActiveCamera() : null;
+        console.log("[Poisto] aktiivinen kamera:", activeCam);
+
+        if (!activeCam) {
+            console.log("[Poisto] Aktiivista kameraa ei löytynyt");
+            return;
+        }
+
+        raycaster.setFromCamera(mouse, activeCam);
+
+        const intersects = raycaster.intersectObjects(scene.children, true);
+        console.log("[Poisto] osumia:", intersects.length);
+
+        selectedObject = null;
+
+        for (const hit of intersects) {
+            const hitObject = hit.object;
+            console.log("[Poisto] osuma objektiin:", hitObject);
+
+            if (isProtectedObject(hitObject)) {
+                console.log("[Poisto] Suojattu objekti, ohitetaan");
+                continue;
+            }
+
+            const topObject = getTopLevelObject(hitObject);
+            console.log("[Poisto] topObject:", topObject);
+
+            if (isProtectedObject(topObject)) {
+                console.log("[Poisto] TopObject suojattu, ohitetaan");
+                continue;
+            }
+
+            selectedObject = topObject;
+            console.log("[Poisto] Valittu objekti:", selectedObject);
+            break;
+        }
+
+        if (!selectedObject) {
+            console.log("[Poisto] Yhtään valittavaa objektia ei löytynyt");
+        }
+    });
+
+    window.addEventListener("keydown", function(event) {
+        const siirtelyRadio = document.getElementById("siirtelytila");
+
+        if (!siirtelyRadio || !siirtelyRadio.checked) return;
+
+        console.log("[Poisto] keydown:", event.key);
+
+        if (!selectedObject) {
+            console.log("[Poisto] Ei valittua objektia");
+            return;
+        }
+
+        const tag = document.activeElement?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+        if (event.key === "Delete" || event.key === "Backspace") {
+            event.preventDefault();
+
+            const parent = selectedObject.parent;
+            if (!parent) return;
+
+            const indexInGroupDrag = groupDragObjects.indexOf(selectedObject);
+            const indexInDrag = dragObjects.indexOf(selectedObject);
+
+            undoHistory.push({
+                type: "poisto",
+                object: selectedObject,
+                parent: parent,
+                indexInGroupDrag: indexInGroupDrag,
+                indexInDrag: indexInDrag
+            });
+
+            parent.remove(selectedObject);
+
+            if (indexInGroupDrag !== -1) {
+                groupDragObjects.splice(indexInGroupDrag, 1);
+            }
+
+            if (indexInDrag !== -1) {
+                dragObjects.splice(indexInDrag, 1);
+            }
+
+            paivitaRaahaus();
+            console.log("[Poisto] Objekti poistettu");
+
+            selectedObject = null;
+        }
+    });
 }

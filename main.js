@@ -3,8 +3,9 @@ import * as THREE from 'three';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
+import { setupTurnEvents, setupDeleteEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
+import { lisaaSuorakaide, lisaaSylinteri } from './objectManager.js';
 
 
 let activeCamera = camera3d;
@@ -49,6 +50,8 @@ initWallManager(() => activeCamera)
 setupTurnEvents(() => activeCamera)
 
 setupTurnOvi(() => activeCamera)
+
+setupDeleteEvents()
 
 function disableBtn() {
     document.getElementById("buttonCamera").disabled = true;
@@ -139,6 +142,9 @@ function paivitaTila() {
     }
 }
 
+// Seuraa, mikä objekti lisätään
+let modalTyyppi = null;
+
 window.addEventListener("DOMContentLoaded", () => {
     const siirtely = document.getElementById("siirtelytila");
     const katselu = document.getElementById("katselutila");
@@ -148,6 +154,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const undoWrap = document.getElementById("undo-wrap");
     const showUndoModes = ['piirtotila', 'ikkunatila', 'ovitila'];
+
+    const suorakaide = document.getElementById('btnSuorakaide');
+    const sylinteri = document.getElementById('btnSylinteri');
+    const modalOK = document.getElementById('modalOK');
+    const modalPeruuta = document.getElementById('modalPeruuta');
 
     //Undo button näkyvyys: piirto, ikkuna ja ovi tiloissa
     document.querySelectorAll('input[name="tila"]').forEach(radio => {
@@ -177,9 +188,72 @@ window.addEventListener("DOMContentLoaded", () => {
             if (lisatty) last.ryhma.remove(lisatty);
             last.poistettavat.forEach(p => last.ryhma.add(p));
         }
+
+
+        if (last.type === "primitiivi") {
+            scene.remove(last.object);
+            const idx = groupDragObjects.indexOf(last.object);
+            if (idx !== -1) groupDragObjects.splice(idx, 1);
+            paivitaRaahaus();
+        }
+      
+        if (last.type === "poisto") {
+          if (last.parent) {
+            last.parent.add(last.object);
+        } else {
+            scene.add(last.object);
+        }
+
+        if (last.indexInGroupDrag !== -1) {
+            groupDragObjects.push(last.object);
+        }
+
+        if (last.indexInDrag !== -1) {
+            dragObjects.push(last.object);
+        }
+
+        paivitaRaahaus();
+    }
+      
     });
 
-    
+    //Logiikka sylintereille ja suorakaiteille
+    suorakaide.addEventListener('click', () => {
+        modalTyyppi = 'suorakaide';
+        document.getElementById('modalOtsikko').textContent = 'Lisää suorakaide';
+        document.getElementById('suorakaideKentat').style.display = 'block';
+        document.getElementById('sylinteriKentat').style.display = 'none';
+        document.getElementById('primitiiviModal').style.display = 'block';
+    });
+
+    sylinteri.addEventListener('click', () => {
+        modalTyyppi = 'sylinteri';
+        document.getElementById('modalOtsikko').textContent = 'Lisää sylinteri';
+        document.getElementById('suorakaideKentat').style.display = 'none';
+        document.getElementById('sylinteriKentat').style.display = 'block';
+        document.getElementById('primitiiviModal').style.display = 'block';
+    });
+
+    modalOK.addEventListener('click', () => {
+        const nimi = document.getElementById('pNimi').value.trim();
+        if (modalTyyppi === 'suorakaide') {
+            const l = parseFloat(document.getElementById('pLeveys').value);
+            const s = parseFloat(document.getElementById('pSyvyys').value);
+            const k = parseFloat(document.getElementById('pKorkeus').value);
+            lisaaSuorakaide(l, s, k, nimi);
+        } else if (modalTyyppi === 'sylinteri') {
+            const h = parseFloat(document.getElementById('pHalkaisija').value);
+            const k = parseFloat(document.getElementById('pSylKorkeus').value);
+            lisaaSylinteri(h, k, nimi);
+        }
+        document.getElementById('primitiiviModal').style.display = 'none';
+    });
+
+    modalPeruuta.addEventListener('click', () => {
+        document.getElementById('primitiiviModal').style.display = 'none';
+
+    });
+
 
     if (siirtely) siirtely.addEventListener("change", paivitaTila);
     
