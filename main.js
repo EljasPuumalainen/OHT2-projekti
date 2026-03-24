@@ -6,6 +6,7 @@ import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPla
 import { setupTurnEvents, setupDeleteEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
 import { lisaaSuorakaide, lisaaSylinteri } from './objectManager.js';
+import { aktivoiMaster, deaktivoiMaster } from './dragAll.js';
 
 
 let activeCamera = camera3d;
@@ -67,6 +68,24 @@ function paivitaTila() {
     const piirtoRadio = document.getElementById("piirtotila");
     const ikkunaRadio = document.getElementById("ikkunatila");
     const oviRadio = document.getElementById("ovitila");
+
+    const muokkaaKaikkiaCheckbox = document.getElementById("muokkaaKaikkia");
+    
+    if (muokkaaKaikkiaCheckbox && muokkaaKaikkiaCheckbox.checked) {
+        // Aktivoi master-tila
+        aktivoiMaster(groupDragObjects, groupDragControls);
+        
+        // Pakotetaan käyttöliittymä oikeaan tilaan
+        setDrawing(false);
+        enableBtn();
+    } else {
+        // Poista master-tila
+        deaktivoiMaster(groupDragObjects, groupDragControls);
+        
+        // Nyt vasta kutsutaan paivitaRaahaus, kun masterGroup on purettu
+        paivitaRaahaus();
+    }
+
 
     if (siirtelyRadio.checked) {
         dragControls.enabled = true;
@@ -212,6 +231,10 @@ window.addEventListener("DOMContentLoaded", () => {
             dragObjects.push(last.object);
         }
 
+        if (document.getElementById("muokkaaKaikkia").checked) {
+            return; // Jos ollaan master-tilassa, älä tee mitään perus-raahauspäivityksiä
+        }
+
         paivitaRaahaus();
     }
       
@@ -334,6 +357,32 @@ export function paivitaRaahaus() {
         dragControls.enabled = false;
         groupDragControls.enabled = false;
     }
+
+
+    document.getElementById("muokkaaKaikkia").addEventListener("change", (event) => {
+    const siirtelyRadio = document.getElementById("siirtelytila");
+    
+    if (event.target.checked) {
+            // 1. PAKOTETAAN siirtelytila päälle (valitaan radio-nappi)
+            if (siirtelyRadio) {
+                siirtelyRadio.checked = true;
+                // Jos sinulla on funktio joka päivittää radioden tilat (esim. paivitaTila), kutsutaan sitä:
+                paivitaTila(); 
+            }
+
+            // 2. AKTIVOIDAAN master-ryhmittely
+            // Varmista, että nämä on importattu dragAll.js:stä
+            aktivoiMaster(groupDragObjects, groupDragControls);
+            
+            console.log("Master-tila ja siirtelytila pakotettu päälle.");
+        } else {
+            // Pura master-tila
+            deaktivoiMaster(groupDragObjects, groupDragControls);
+            
+            // Palauta raahaus normaaliksi
+            paivitaRaahaus();
+        }
+    });
 
     console.log(`%c[System] Raahaus päivitetty. Seiniä: ${dragObjects.length}, Ryhmiä: ${groupDragObjects.length}`, "color: #27ae60");
 }
