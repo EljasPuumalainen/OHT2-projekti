@@ -69,6 +69,34 @@
     background-color: #e0e0e0; /* Tummuu hieman kun hiiri on päällä */
 }
 
+#kaikki-wrap { 
+    top: 415px; /* Sijoitetaan alimmaksi */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Jos haluat kytkimestä "slider"-tyylisen (valinnainen) */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+input:checked + .slider { background-color: #2196F3; }
+
 
     </style>
   </head>
@@ -103,6 +131,14 @@
     <div id="undo-wrap" class="menu-item" style="background: none;">
       <button id="buttonUndo" title="Ctrl+Z">↩ Kumoa</button>
     </div>
+
+  <div id="kaikki-wrap" class="menu-item">
+      <label class="switch">
+        <input type="checkbox" id="muokkaaKaikkia">
+        <span class="slider"></span>
+      </label>
+      <span style="font-size: 14px; cursor: default;">Liikuta kaikkia</span>
+  </div>
 
     <div id="save-wrap" class="menu-item" style="background: none;">
     <button id="buttonSave" title="Tallenna (S)">💾 Tallenna</button>
