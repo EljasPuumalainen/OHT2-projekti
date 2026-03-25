@@ -363,25 +363,39 @@ export function paivitaRaahaus() {
 
     
     if (muokkaaKaikkiaCheckbox) {
-        // Poistetaan vanha kuuntelija varmuuden vuoksi (jos mahdollista) tai lisätään uusi
-        muokkaaKaikkiaCheckbox.onchange = (event) => {
-            event.stopImmediatePropagation();
-            
-            const siirtelyRadio = document.getElementById("siirtelytila");
+    muokkaaKaikkiaCheckbox.onchange = (event) => {
+        event.stopImmediatePropagation();
+        
+        const siirtelyRadio = document.getElementById("siirtelytila");
 
-            if (event.target.checked) {
-                if (siirtelyRadio) siirtelyRadio.checked = true;
-                aktivoiMaster(groupDragObjects, groupDragControls);
-                if (typeof setDrawing === 'function') setDrawing(false);
-            } else {
-                deaktivoiMaster(groupDragObjects, groupDragControls);
-                paivitaRaahaus();
+        if (event.target.checked) {
+            // 1. Varmistetaan että siirtelytila on päällä radiossa
+            if (siirtelyRadio) siirtelyRadio.checked = true;
+            
+            // 2. Aktivoidaan master-ryhmä
+            aktivoiMaster(groupDragObjects, groupDragControls);
+            
+            // 3. Pakotetaan kontrollit päälle HETI
+            if (dragControls) dragControls.enabled = true;
+            if (groupDragControls) {
+                groupDragControls.enabled = true;
+                groupDragControls.objects = [masterGroup]; 
             }
-        };
+            
+            if (typeof setDrawing === 'function') setDrawing(false);
+            console.log("Master-liikutus aktivoitu.");
+        } else {
+            // TÄMÄ OLI SE PUUTTUVA OSA: Mitä tapahtuu kun rasti otetaan pois
+            deaktivoiMaster(groupDragObjects, groupDragControls);
+            paivitaRaahaus(); 
+            console.log("Master-liikutus poistettu.");
+        }
+    };
     } else {
-        // Jos tänne tullaan, joku on poistanut id="muokkaaKaikkia" HTML:stä!
-        console.error("VIRHE: Elementtiä 'muokkaaKaikkia' ei löydy HTML-koodista. Tarkista index.html!");
+        // TÄMÄ else kuuluu tuolle ylimmälle if-lauseelle (jos elementtiä ei ole HTML:ssä)
+        console.error("VIRHE: Elementtiä 'muokkaaKaikkia' ei löydy HTML-koodista!");
     }
+
 
     console.log(`%c[System] Raahaus päivitetty. Seiniä: ${dragObjects.length}, Ryhmiä: ${groupDragObjects.length}`, "color: #27ae60");
 }
