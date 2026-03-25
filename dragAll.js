@@ -21,9 +21,9 @@ export function aktivoiMaster(groupDragObjects, groupDragControls) {
             // Korostus
             group.traverse(child => {
                 if (child.isMesh) {
-                    if (!child.userData.originalColor) child.userData.originalColor = child.material.color.getHex();
-                    child.material.emissive?.setHex(0x00ff00);
-                    child.material.emissiveIntensity = 0.3;
+                    if (!child.userData.originalMaterial) child.userData.originalMaterial = child.material;
+                    child.material = child.userData.originalMaterial.clone();
+                    child.material.color.setHex(0xa8f4a8); // laskettu lopputulosväri
                 }
             });
         });
@@ -43,7 +43,10 @@ export function deaktivoiMaster(groupDragObjects, groupDragControls) {
     if (scene.children.includes(masterGroup)) {
         [...masterGroup.children].forEach(group => {
             group.traverse(child => {
-                if (child.isMesh) child.material.emissive?.setHex(0x000000);
+                if (child.isMesh && child.userData.originalMaterial) {
+                    child.material = child.userData.originalMaterial;
+                    child.userData.originalMaterial = null;
+                }
             });
             scene.attach(group);
         });
