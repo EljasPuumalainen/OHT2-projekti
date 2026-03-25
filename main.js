@@ -359,29 +359,29 @@ export function paivitaRaahaus() {
     }
 
 
-    const muokkaaKaikkiaCheckbox = document.getElementById("muokkaaKaikkia");
+    const muokkaaKaikkiaCheckbox = document.getElementById("liikutaKaikkia");
 
-    muokkaaKaikkiaCheckbox.addEventListener("change", (event) => {
-        // Pysäytetään eventin kulku, ettei se laukaise muita kuuntelijoita vahingossa
-        event.stopImmediatePropagation();
-        
-        const siirtelyRadio = document.getElementById("siirtelytila");
+    
+    if (muokkaaKaikkiaCheckbox) {
+        // Poistetaan vanha kuuntelija varmuuden vuoksi (jos mahdollista) tai lisätään uusi
+        muokkaaKaikkiaCheckbox.onchange = (event) => {
+            event.stopImmediatePropagation();
+            
+            const siirtelyRadio = document.getElementById("siirtelytila");
 
-        if (event.target.checked) {
-            // 1. Asetetaan radio-nappi, mutta EI kutsuta paivitaTila() -funktiota tässä!
-            // Muutetaan vain ulkoasua/tilaa suoraan.
-            if (siirtelyRadio) siirtelyRadio.checked = true;
-            
-            // 2. Kutsutaan ryhmittely
-            aktivoiMaster(groupDragObjects, groupDragControls);
-            
-            // 3. Suljetaan piirto
-            setDrawing(false);
-        } else {
-            deaktivoiMaster(groupDragObjects, groupDragControls);
-            paivitaRaahaus();
-        }
-    });
+            if (event.target.checked) {
+                if (siirtelyRadio) siirtelyRadio.checked = true;
+                aktivoiMaster(groupDragObjects, groupDragControls);
+                if (typeof setDrawing === 'function') setDrawing(false);
+            } else {
+                deaktivoiMaster(groupDragObjects, groupDragControls);
+                paivitaRaahaus();
+            }
+        };
+    } else {
+        // Jos tänne tullaan, joku on poistanut id="muokkaaKaikkia" HTML:stä!
+        console.error("VIRHE: Elementtiä 'muokkaaKaikkia' ei löydy HTML-koodista. Tarkista index.html!");
+    }
 
     console.log(`%c[System] Raahaus päivitetty. Seiniä: ${dragObjects.length}, Ryhmiä: ${groupDragObjects.length}`, "color: #27ae60");
 }
