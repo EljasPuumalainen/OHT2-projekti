@@ -8,17 +8,22 @@ export const masterGroup = new THREE.Group();
 masterGroup.userData.tyyppi = "master";
 
 export function aktivoiMaster(groupDragObjects, groupDragControls) {
-    if (!groupDragObjects || groupDragObjects.length === 0) return;
+    // Jos masterGroup on jo scenessä, ei tehdä mitään (estää rämppäys-jumin)
+    if (scene.getObjectByName("MASTER_SYSTEM")) return;
+    
+    masterGroup.name = "MASTER_SYSTEM"; // Annetaan nimi tunnistusta varten
+    masterGroup.position.set(0, 0, 0);
+    scene.add(masterGroup);
 
-    if (!scene.children.includes(masterGroup)) {
-        masterGroup.position.set(0, 0, 0);
-        scene.add(masterGroup);
-
-        // Siirretään seinäryhmät masteriin
-        [...groupDragObjects].forEach(group => {
+    // Käydään lista läpi käänteisessä järjestyksessä (turvallisempaa siirrettäessä)
+    for (let i = groupDragObjects.length - 1; i >= 0; i--) {
+        const group = groupDragObjects[i];
+        
+        // Varmistus: onhan se varmasti olemassa ja scenessä
+        if (group && group.parent) {
             masterGroup.attach(group);
             
-            // Korostus
+            // Korostus looppina
             group.traverse(child => {
                 if (child.isMesh) {
                     if (!child.userData.originalMaterial) child.userData.originalMaterial = child.material;
@@ -26,34 +31,31 @@ export function aktivoiMaster(groupDragObjects, groupDragControls) {
                     child.material.color.setHex(0xa8f4a8); // laskettu lopputulosväri
                 }
             });
-        });
+        }
     }
 
-    // Asetetaan raahaus:
-    // 1. Tyhjennetään vanhat kohteet
-    // 2. Laitetaan VAIN masterGroup listalle
-    // 3. transformGroup = true, jolloin se liikuttaa ryhmää kun klikkaat lasta
-    groupDragControls.transformGroup = true;
-    groupDragControls.objects = [masterGroup]; 
-
-    console.log("Master-tila: DragControls ohjattu masterGroupiin.");
+    if (groupDragControls) {
+        groupDragControls.transformGroup = true;
+        groupDragControls.objects = [masterGroup];
+    }
 }
 
 export function deaktivoiMaster(groupDragObjects, groupDragControls) {
-    if (scene.children.includes(masterGroup)) {
-        [...masterGroup.children].forEach(group => {
-            group.traverse(child => {
-                if (child.isMesh && child.userData.originalMaterial) {
-                    child.material = child.userData.originalMaterial;
-                    child.userData.originalMaterial = null;
-                }
-            });
-            scene.attach(group);
-        });
-        scene.remove(masterGroup);
-    }
+    // Jos masterGroupia ei löydy, ei ole mitään purettavaa
+    if (!scene.getObjectByName("MASTER_SYSTEM")) return;
 
-    // Palautetaan normaalit asetukset wallManagerin listalle
+    // Palautetaan kaikki lapset scenen juureen
+    const lapset = [...masterGroup.children];
+    lapset.forEach(group => {
+        group.traverse(child => {
+            if (child.isMesh) child.material.emissive?.setHex(0x000000);
+        });
+        scene.attach(group);
+    });
+
+    scene.remove(masterGroup);
+    masterGroup.name = ""; // Tyhjennetään nimi
+
     if (groupDragControls) {
         groupDragControls.objects = groupDragObjects;
         groupDragControls.transformGroup = true;

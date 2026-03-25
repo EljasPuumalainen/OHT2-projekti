@@ -359,27 +359,26 @@ export function paivitaRaahaus() {
     }
 
 
-    document.getElementById("liikutaKaikkia").addEventListener("change", (event) => {
-    const siirtelyRadio = document.getElementById("siirtelytila");
-    
-    if (event.target.checked) {
-            // 1. PAKOTETAAN siirtelytila päälle (valitaan radio-nappi)
-            if (siirtelyRadio) {
-                siirtelyRadio.checked = true;
-                // Jos sinulla on funktio joka päivittää radioden tilat (esim. paivitaTila), kutsutaan sitä:
-                paivitaTila(); 
-            }
+    const muokkaaKaikkiaCheckbox = document.getElementById("muokkaaKaikkia");
 
-            // 2. AKTIVOIDAAN master-ryhmittely
-            // Varmista, että nämä on importattu dragAll.js:stä
+    muokkaaKaikkiaCheckbox.addEventListener("change", (event) => {
+        // Pysäytetään eventin kulku, ettei se laukaise muita kuuntelijoita vahingossa
+        event.stopImmediatePropagation();
+        
+        const siirtelyRadio = document.getElementById("siirtelytila");
+
+        if (event.target.checked) {
+            // 1. Asetetaan radio-nappi, mutta EI kutsuta paivitaTila() -funktiota tässä!
+            // Muutetaan vain ulkoasua/tilaa suoraan.
+            if (siirtelyRadio) siirtelyRadio.checked = true;
+            
+            // 2. Kutsutaan ryhmittely
             aktivoiMaster(groupDragObjects, groupDragControls);
             
-            console.log("Master-tila ja siirtelytila pakotettu päälle.");
+            // 3. Suljetaan piirto
+            setDrawing(false);
         } else {
-            // Pura master-tila
             deaktivoiMaster(groupDragObjects, groupDragControls);
-            
-            // Palauta raahaus normaaliksi
             paivitaRaahaus();
         }
     });
