@@ -26,9 +26,9 @@ export function aktivoiMaster(groupDragObjects, groupDragControls) {
             // Korostus looppina
             group.traverse(child => {
                 if (child.isMesh) {
-                    if (!child.userData.originalColor) child.userData.originalColor = child.material.color.getHex();
-                    child.material.emissive?.setHex(0x00ff00);
-                    child.material.emissiveIntensity = 0.3;
+                    if (!child.userData.originalMaterial) child.userData.originalMaterial = child.material;
+                    child.material = child.userData.originalMaterial.clone();
+                    child.material.color.setHex(0xa8f4a8); // laskettu lopputulosväri
                 }
             });
         }

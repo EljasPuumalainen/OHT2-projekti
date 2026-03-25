@@ -69,9 +69,9 @@ function paivitaTila() {
     const ikkunaRadio = document.getElementById("ikkunatila");
     const oviRadio = document.getElementById("ovitila");
 
-    const muokkaaKaikkiaCheckbox = document.getElementById("muokkaaKaikkia");
+    const liikutaKaikkiaCheckbox = document.getElementById("liikutaKaikkia");
     
-    if (muokkaaKaikkiaCheckbox && muokkaaKaikkiaCheckbox.checked) {
+    if (liikutaKaikkiaCheckbox && liikutaKaikkiaCheckbox.checked) {
         // Aktivoi master-tila
         aktivoiMaster(groupDragObjects, groupDragControls);
         
@@ -231,7 +231,7 @@ window.addEventListener("DOMContentLoaded", () => {
             dragObjects.push(last.object);
         }
 
-        if (document.getElementById("muokkaaKaikkia").checked) {
+        if (document.getElementById("liikutaKaikkia").checked) {
             return; // Jos ollaan master-tilassa, älä tee mitään perus-raahauspäivityksiä
         }
 

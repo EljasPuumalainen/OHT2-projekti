@@ -33,7 +33,7 @@ window.addEventListener("mousemove", (event) => {
 
 window.addEventListener("mousedown", (event) => {
 
-    if (event.clientX < 300 && event.clientY < 400) {
+    if (event.clientX < 200 && event.clientY < 500) {
         return;
     }
 
@@ -172,11 +172,14 @@ window.addEventListener("mousemove", (event) => {
     const ikkunaTilaPaalla = document.getElementById("ikkunatila").checked;
     const oviTilaPaalla = document.getElementById("ovitila").checked;
     const siirtelyTilaPaalla = document.getElementById("siirtelytila").checked;
+    const liikutaKaikkia = document.getElementById("liikutaKaikkia").checked;
 
     hoverBox.visible = false;
     hoverBoxSeina.visible = false;
     
     if (ikkunaTilaPaalla || oviTilaPaalla || siirtelyTilaPaalla) {
+        if (liikutaKaikkia) return;
+
         const mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
