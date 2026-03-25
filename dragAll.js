@@ -48,7 +48,10 @@ export function deaktivoiMaster(groupDragObjects, groupDragControls) {
     const lapset = [...masterGroup.children];
     lapset.forEach(group => {
         group.traverse(child => {
-            if (child.isMesh) child.material.emissive?.setHex(0x000000);
+            if (child.isMesh && child.userData.originalMaterial) {
+                // PALAUTUS: Asetetaan alkuperäinen materiaali takaisin (ei vain väriä)
+                child.material = child.userData.originalMaterial;
+            }
         });
         scene.attach(group);
     });
