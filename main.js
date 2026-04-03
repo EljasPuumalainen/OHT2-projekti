@@ -393,13 +393,16 @@ export function paivitaRaahaus() {
         const siirtelyRadio = document.getElementById("siirtelytila");
 
         if (event.target.checked) {
-            // 1. Varmistetaan että siirtelytila on päällä radiossa
+            // Varmistetaan että siirtelytila on päällä radiossa
             if (siirtelyRadio) siirtelyRadio.checked = true;
             
-            // 2. Aktivoidaan master-ryhmä
+            // jotta ei tulisi bugia kun piirto tilassa painetaan "liikuta kaikkia"
+            paivitaTila();
+
+            // Aktivoidaan master-ryhmä
             aktivoiMaster(groupDragObjects, groupDragControls);
             
-            // 3. Pakotetaan kontrollit päälle HETI
+            // Pakotetaan kontrollit päälle HETI
             if (dragControls) dragControls.enabled = true;
             if (groupDragControls) {
                 groupDragControls.enabled = true;
@@ -409,14 +412,14 @@ export function paivitaRaahaus() {
             if (typeof setDrawing === 'function') setDrawing(false);
             console.log("Master-liikutus aktivoitu.");
         } else {
-            // TÄMÄ OLI SE PUUTTUVA OSA: Mitä tapahtuu kun rasti otetaan pois
+            // tapahtuu kun rasti otetaan pois
             deaktivoiMaster(groupDragObjects, groupDragControls);
             paivitaRaahaus(); 
             console.log("Master-liikutus poistettu.");
         }
     };
     } else {
-        // TÄMÄ else kuuluu tuolle ylimmälle if-lauseelle (jos elementtiä ei ole HTML:ssä)
+        // ylimmälle if-lauseelle (jos elementtiä ei ole HTML:ssä)
         console.error("VIRHE: Elementtiä 'muokkaaKaikkia' ei löydy HTML-koodista!");
     }
 
