@@ -6,6 +6,14 @@ import { luoNimiLabel } from './objectManager.js';
 
 // ---Tallennus-------
 
+/**
+ * Suodattaa seinäobjektit, muuntaa ne JSON-muotoon ja käynnistää tiedoston latauksen.
+ * * Funktio poimii `groupDragObjects`-taulukosta vain ne ryhmät, jotka sisältävät
+ * seiniä, ja hyödyntää Three.js:n toJSON-metodia 3D-datan säilyttämiseen.
+ * * @function tallennaJSON
+ * @returns {void}
+ */
+
 export function tallennaJSON() {
     // 1. Otetaan objektit
     const objektit = groupDragObjects.filter(group => {
@@ -26,19 +34,36 @@ export function tallennaJSON() {
 
         return { threeData: json };
     });
-
-    const jsonString = JSON.stringify(exportData, null, 2);
-    downloadJSON(jsonString, "objektit.json");
-    console.log("--------------- OBJEKTIT TALLENNETTU ---------------");
+    // muutetaan json merkkijonoksi tekstitiedostoa varten
+    const jsonString = JSON.stringify(exportData, null, 2); 
+    downloadJSON(jsonString, "seinat.json");
+    console.log("--------------- SEINÄT TALLENNETTU ---------------");
     console.log(jsonString);
 }
 
+/**
+ * Luo tekstimuotoisesta JSON-datasta tiedoston ja lataa sen selaimen kautta käyttäjän koneelle.
+ * * Funktio hyödyntää Blob-objektia ja väliaikaista URL-linkkiä tiedonsiirtoon.
+ * Muisti siivotaan automaattisesti latauksen jälkeen URL.revokeObjectURL-metodilla.
+ * * @function downloadJSON
+ * @param {string} jsonString - Merkkijonomuotoinen JSON-data, joka halutaan tallentaa.
+ * @param {string} fileName - Tiedoston nimi, jolla se tallennetaan (esim. "projekti.json").
+ * @returns {void}
+ */
+
 function downloadJSON(jsonString, fileName) {
+
     const blob = new Blob([jsonString], { type: 'application/json' });
+
     const url = URL.createObjectURL(blob);
+
     const link = document.createElement('a');
+
+
     link.href = url;
+
     link.download = fileName;
+
     link.click();
     // Siivotaan muisti
     URL.revokeObjectURL(url);
@@ -46,7 +71,20 @@ function downloadJSON(jsonString, fileName) {
 
 // ------Lataus---------
 
+/**
+ * Lukee käyttäjän valitseman JSON-tiedoston, tyhjentää nykyisen skenen ja lataa uudet objektit.
+ * * Funktio suorittaa seuraavat vaiheet:
+ * 1. Lukee tiedoston FileReader-rajapinnalla.
+ * 2. Tyhjentää `scene`-objektin ja hallintalistat duplikaattien estämiseksi.
+ * 3. Muuntaa JSON-datan Three.js-objekteiksi ObjectLoaderin avulla.
+ * 4. Rekisteröi ladatut objektit takaisin raahausjärjestelmään.
+ * * @function lataaJSON
+ * @param {Event} event - Selaimen tiedostonvalinta-tapahtuma (change event).
+ * @returns {void}
+ */
+
 export function lataaJSON(event) {
+  
     const tiedosto = event.target.files[0];
     if (!tiedosto) return;
 
@@ -91,7 +129,7 @@ export function lataaJSON(event) {
     lukija.readAsText(tiedosto);
 }
 
-// -------Kuuntelijat---------
+// -------kuuntelijat---------
 
 // Tallennusnappi
 document.getElementById('buttonSave').addEventListener('click', tallennaJSON);
