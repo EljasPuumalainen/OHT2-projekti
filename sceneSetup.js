@@ -59,6 +59,10 @@ scene.add( grid );
 export const grid2 = new THREE.GridHelper(100, 20, 0xbbbbbb, 0xbbbbbb);
 scene.add( grid2 );
 
+// rendataan päägridit eka, sitten vasta kuva
+grid.renderOrder = 0;
+grid2.renderOrder = 0;
+
 export const buttonCamera = document.getElementById("buttonCamera");
 
 export const planeGeo = new THREE.PlaneGeometry(100, 100);

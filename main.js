@@ -6,6 +6,7 @@ import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPla
 import { setupTurnEvents, setupDeleteEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
 import { lisaaSuorakaide, lisaaSylinteri } from './objectManager.js';
+import { lataaPohjakuva, asetaOpasiteetti, asetaLeveys, asetaKorkeus, toggleLukitus, onkoLukittu, onkoPohjakuva, initImageManager, startKalibrointi, initKalibrointiNapit } from './imageManager.js';
 
 
 let activeCamera = camera3d;
@@ -46,6 +47,8 @@ paivitaRaahaus()
 setDrawing(true)
 
 initWallManager(() => activeCamera)
+
+initImageManager(() => activeCamera)
 
 setupTurnEvents(() => activeCamera)
 
@@ -160,6 +163,13 @@ window.addEventListener("DOMContentLoaded", () => {
     const modalOK = document.getElementById('modalOK');
     const modalPeruuta = document.getElementById('modalPeruuta');
 
+    const pohjakuva = document.getElementById('lataaPohjakuvatiedosto');
+    const opasiteetti = document.getElementById('sliderOpasiteetti');
+    const inputLeveys = document.getElementById('inputLeveys');
+    const inputKorkeus = document.getElementById('inputKorkeus');
+    const lukitse = document.getElementById('btnLukitsePohjakuva');
+    const btnKalibroi = document.getElementById('btnKalibroi');
+
     //Undo button näkyvyys: piirto, ikkuna ja ovi tiloissa
     document.querySelectorAll('input[name="tila"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
@@ -251,9 +261,21 @@ window.addEventListener("DOMContentLoaded", () => {
 
     modalPeruuta.addEventListener('click', () => {
         document.getElementById('primitiiviModal').style.display = 'none';
-
     });
 
+    pohjakuva.addEventListener('change', (e) => {
+        if (e.target.files[0]) lataaPohjakuva(e.target.files[0]);
+    });
+
+    opasiteetti.addEventListener('input', (e) => {
+        asetaOpasiteetti(e.target.value);
+    });
+
+    inputLeveys.addEventListener('input', (e) => asetaLeveys(e.target.value));
+    
+    inputKorkeus.addEventListener('input', (e) => asetaKorkeus(e.target.value));
+
+    lukitse.addEventListener('click', toggleLukitus);
 
     if (siirtely) siirtely.addEventListener("change", paivitaTila);
     
@@ -269,6 +291,7 @@ window.addEventListener("DOMContentLoaded", () => {
     //Sivun latautuessa automaattisesti katselutilaan
     if (katselu) katselu.checked = true;
 
+    if(btnKalibroi) btnKalibroi.addEventListener('click', startKalibrointi);
 
 
     const saveBtn = document.getElementById('buttonSave');
@@ -288,6 +311,7 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    initKalibrointiNapit();
     paivitaTila();
 })
 

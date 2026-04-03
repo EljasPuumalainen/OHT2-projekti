@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
 import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
-import { distance } from 'three/tsl';
 
 
 export const dragObjects = [] 
@@ -40,10 +39,12 @@ window.addEventListener("mousedown", (event) => {
     if (!isDrawing || event.button !== 0)
         return;
 
+    const rect = renderer.domElement.getBoundingClientRect();
+
     const mouse = new THREE.Vector2(
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
-    )
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
 
     const raycaster = new THREE.Raycaster()
     if (getActiveCamera) {
@@ -69,9 +70,11 @@ window.addEventListener("mousemove", (event) => {
     if (!isDrawing || !currentWallGroup)
         return;
 
+    const rect = renderer.domElement.getBoundingClientRect();
+
     const mouse = new THREE.Vector2(
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
     );
 
     const raycaster = new THREE.Raycaster()
@@ -177,10 +180,13 @@ window.addEventListener("mousemove", (event) => {
     hoverBoxSeina.visible = false;
     
     if (ikkunaTilaPaalla || oviTilaPaalla || siirtelyTilaPaalla) {
+        const rect = renderer.domElement.getBoundingClientRect();
+
         const mouse = new THREE.Vector2(
-            (event.clientX / window.innerWidth) * 2 - 1,
-            -(event.clientY / window.innerHeight) * 2 + 1
+            ((event.clientX - rect.left) / rect.width) * 2 - 1,
+            -((event.clientY - rect.top) / rect.height) * 2 + 1
         );
+
         const raycaster = new THREE.Raycaster();
         if (getActiveCamera) {
         raycaster.setFromCamera(mouse, getActiveCamera());
@@ -386,8 +392,10 @@ export function setupTurnOvi(getCamera) {
         if (event.button == 2) {
 
             //Laskee hiiren sijainnin
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            const rect = renderer.domElement.getBoundingClientRect();
+
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
             //Päivitetään raycaster kameran ja hiiren mukaan
             if (getActiveCamera) {
@@ -465,8 +473,10 @@ export function setupTurnEvents(getCamera) {
         if (event.button == 2) {
 
             //Laskee hiiren sijainnin
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            const rect = renderer.domElement.getBoundingClientRect();
+
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
             //Päivitetään raycaster kameran ja hiiren mukaan
             if (getActiveCamera) {
@@ -571,8 +581,10 @@ export function setupDeleteEvents() {
             return;
         }
 
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        const rect = renderer.domElement.getBoundingClientRect();
+
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         const activeCam = getActiveCamera ? getActiveCamera() : null;
         console.log("[Poisto] aktiivinen kamera:", activeCam);
@@ -649,6 +661,10 @@ export function setupDeleteEvents() {
             });
 
             parent.remove(selectedObject);
+
+            if (selectedObject.userData.tyyppi === 'pohjakuva') {
+                window.dispatchEvent(new CustomEvent('pohjakuvaDeleted'));
+            }
 
             if (indexInGroupDrag !== -1) {
                 groupDragObjects.splice(indexInGroupDrag, 1);

@@ -36,6 +36,26 @@
       #suorakaide-wrap { top: 345px; }
       #sylinteri-wrap { top: 380px; }
 
+      #pohjakuva-wrap  { top: 415px; }
+      #pohjakuvaKontrollit {
+          position: absolute;
+          left: 20px;
+          top: 450px;
+          z-index: 100;
+          background: white;
+          padding: 8px;
+          border-radius: 4px;
+          display: none;
+          width: 160px;
+          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+          font-size: 13px;
+      }
+      #pohjakuvaKontrollit label {
+          display: block;
+          margin-bottom: 4px;
+      }
+      #pohjakuvaKontrollit input[type=range] { width: 100%; }
+
       #sidebar {
         position: fixed;
         right: 0;
@@ -121,6 +141,39 @@
 
   <div id="sylinteri-wrap" class="menu-item" style="background: none;">
     <button id="btnSylinteri">Lisää sylinteri</button>
+  </div>
+
+  <div id="pohjakuva-wrap" class="menu-item" style="background: none;">
+    <label for="lataaPohjakuvatiedosto" class="custom-file-upload" title="Lataa pohjakuva">
+        🗺️ Pohjakuva
+    </label>
+    <input type="file" id="lataaPohjakuvatiedosto" accept="image/*" style="display: none;">
+  </div>
+
+  <div id="pohjakuvaKontrollit">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <strong>Pohjakuva</strong>
+        <button id="btnSuljePohjakuva" style="background:none; border:none; cursor:pointer; font-size:16px;">✕</button>
+    </div>
+    <label>Läpinäkyvyys:
+        <input type="range" id="sliderOpasiteetti" min="0.05" max="1" step="0.05" value="0.5">
+    </label>
+    <label>Leveys (m):
+        <input type="number" id="inputLeveys" min="0.5" max="200" step="0.5" value="10" style="width:100%">
+    </label>
+    <label>Korkeus (m):
+        <input type="number" id="inputKorkeus" min="0.5" max="200" step="0.5" value="10" style="width:100%">
+    </label>
+    <button id="btnKalibroi" style="width:100%; margin-top:4px">📐 Kalibroi mittakaava</button>
+    <div id="kalibrointiInfo" style="display:none; margin-top:6px; font-size:12px; color:#cc0000; font-weight:bold;"></div>
+    <div id="kalibrointiVahvistus" style="display:none; margin-top:6px;">
+        <label style="font-size:12px;">Oikea etäisyys (m):
+            <input type="number" id="kalibrointiEtaisyys" min="0.1" step="0.1" style="width:100%">
+        </label>
+        <button id="kalibrointiOK" style="margin-top:4px; margin-right:4px">✅ Käytä</button>
+        <button id="kalibrointiPeruuta">❌ Peruuta</button>
+    </div>
+    <button id="btnLukitsePohjakuva" style="width:100%; margin-top:4px">🔒 Lukitse (L)</button>
   </div>
 
     <div id="mittausLabel" style="
