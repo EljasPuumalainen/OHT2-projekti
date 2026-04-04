@@ -1,280 +1,683 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Demo</title>
-    <style>
-      body { margin: 0; }
+<head>
+  <meta charset="utf-8">
+  <title>Pohjapiirrossovellus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-      #buttonCamera {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        z-index: 100;
-        padding: 10px 20px;
-        cursor: pointer;
-      }
-      .menu-item {
-        position: absolute;
-        left: 20px;
-        z-index: 100;
-        background: white;
-        padding: 5px;
-        border-radius: 4px;
-      }
-      #katselu-wrap { top: 65px; }
-      #siirtely-wrap { top : 100px; }
-      #piirto-wrap { top: 135px; }
-      #ikkuna-wrap { top: 170px; }
-      #ovi-wrap { top: 205px; }
-      #undo-wrap { top: 240px; }
-      #save-wrap { top: 275px; }
-      #load-wrap { 
-          top: 310px; 
-          cursor: pointer;
-      }
-      #suorakaide-wrap { top: 345px; }
-      #sylinteri-wrap { top: 380px; }
+    :root {
+      --bg:           #fffefe;
+      --surface:      #000000;
+      --surface-2:    rgb(46, 45, 45);
+      --surface-3:    #3d3d3d;
+      --border:       #4e4d4d;
+      --accent:       #ffffff;
+      --accent-dim:   rgba(169, 169, 169);
+      --accent-mid:   rgb(46, 45, 45);
+      --text:         #9c9c9c;
+      --text-dim:     #ffffff;
+      --text-muted:   #000000;
+      --danger:       #e05555;
+      --font:         'Outfit', sans-serif;
+      --mono:         'Space Mono', monospace;
 
-      #pohjakuva-wrap  { top: 415px; }
-      #pohjakuvaKontrollit {
-          position: absolute;
-          left: 20px;
-          top: 450px;
-          z-index: 100;
-          background: white;
-          padding: 8px;
-          border-radius: 4px;
-          display: none;
-          width: 160px;
-          font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-          font-size: 13px;
-      }
-      #pohjakuvaKontrollit label {
-          display: block;
-          margin-bottom: 4px;
-      }
-      #pohjakuvaKontrollit input[type=range] { width: 100%; }
+      /* kelluvien elementtien väli */
+      --gap:          10px;
 
-      #sidebar {
-        position: fixed;
-        right: 0;
-        top: 0;
-        width: 250px;
-        height: 100vh;
-        background: #4A4A4A;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        z-index: 1000;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        font-size: 15px;
-      }
+      /* johdetut mitat, paneelit on upotettu --gap:n verran joka puolelta */
+      --top-h:        52px;
+      --left-w:       210px;
+      --bottom-h:     42px;
 
-      .custom-file-upload {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background-color: #f0f0f0; 
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: sans-serif;
-    font-size: 14px;
-    transition: background 0.2s;
-  }
-  .custom-file-upload:hover {
-    background-color: #e0e0e0; 
-}
+      /* yhteistä visuaalisuutta */
+      --radius:       10px;
+      --shadow:       0 8px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.03);
+    }
 
-#kaikki-wrap { 
-    top: 450px; 
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
 
+    /* ruudukkorakenne */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(77,142,240,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(77,142,240,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 34px;
-    height: 20px;
-}
+    /* YLÄPALKKI */
+    #topbar {
+      position: fixed;
+      top: var(--gap);
+      left: var(--gap);
+      right: var(--gap);
+      height: var(--top-h);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 200;
+    }
 
-.switch input { opacity: 0; width: 0; height: 0; }
+    #topbar-left, #topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 20px;
-}
+    .logo {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-right: 16px;
+      user-select: none;
+    }
 
-input:checked + .slider { background-color: #2196F3; }
+    .divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      margin: 0 4px;
+    }
 
+    /* NAPIT */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 13px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: var(--font);
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-dim);
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--surface-3);
+      color: var(--text);
+      border-color: #363650;
+    }
+    .btn:disabled { opacity: 0.38; cursor: not-allowed; }
 
-    </style>
-  </head>
-  <body>
-    <button id="buttonCamera">Vaihda 2D</button>
+    .btn-accent {
+      background: var(--accent-mid);
+      border-color: var(--border);
+      color: var(--accent);
+    }
+    .btn-accent:hover:not(:disabled) {
+      background: var(--accent-dim);
+      color: #000000;
+    }
 
-    <div id="siirtely-wrap" class="menu-item">
-      <input type="radio" id="siirtelytila" name="tila" value="siirtelytila">
-      <label for="siirtelytila">Siirtely</label>
+    /* tiedostonsyöttö */
+    .btn-file {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .btn-file input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* UNDO */
+    #undo-wrap { display: none; }
+
+    /* VASEN PANEELI */
+    #leftpanel {
+      position: fixed;
+      top: calc(var(--top-h) + var(--gap) * 2);
+      left: var(--gap);
+      width: var(--left-w);
+      height: fit-content;
+      max-height: calc(100vh - var(--bottom-h) - var(--gap) * 3);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow-y: auto;
+      z-index: 100;
+      padding: 8px 0 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    #leftpanel::-webkit-scrollbar { width: 4px; }
+    #leftpanel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .panel-section { padding: 6px 0; }
+    .panel-section + .panel-section {
+      border-top: 1px solid var(--border);
+      margin-top: 2px;
+      padding-top: 10px;
+    }
+
+    .panel-heading {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: rgb(255, 255, 255);
+      padding: 2px 15px 8px;
+      user-select: none;
+    }
+
+    .tool-radio { display: none; }
+
+    .tool-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-dim);
+      border-left: 2px solid transparent;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      user-select: none;
+    }
+    .tool-label:hover { background: var(--surface-2); color: var(--text); }
+    .tool-radio:checked + .tool-label {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* toimintopainikkeet */
+    .panel-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 15px;
+      width: 100%;
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      border-left: 2px solid transparent;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s, color 0.12s;
+    }
+    .panel-btn:hover { background: var(--surface-2); color: var(--text); }
+
+    .tool-icon {
+      font-size: 14px;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
+
+    /* liikuta kaikkia - toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 15px;
+      cursor: pointer;
+    }
+    .toggle-label-text { font-size: 13px; color: var(--text-dim); }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 32px; height: 18px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      transition: .22s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      height: 12px; width: 12px;
+      left: 2px; bottom: 2px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      transition: .22s;
+    }
+    .switch input:checked + .slider { background: var(--accent); border-color: var(--accent); }
+    .switch input:checked + .slider::before { transform: translateX(14px); background: #000000; }
+
+    /* ALAPALKKI */
+    #bottombar {
+      position: fixed;
+      bottom: var(--gap);
+      left: var(--gap);
+      right: var(--gap);
+      height: var(--bottom-h);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      z-index: 200;
+    }
+
+    #status-mode {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding: 3px 9px;
+      background: var(--accent-mid);
+      border: 1px solid --border;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    #status-desc {
+      font-size: 15px;
+      color: var(--text-dim);
+    }
+
+    /* SEINÄN MITTAUS */
+    #mittausLabel {
+      position: fixed;
+      background: var(--surface-2);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 4px;
+      pointer-events: none;
+      display: none;
+    }
+
+    /* POHJAKUVAN KONTROLLIT */
+    #pohjakuvaKontrollit {
+      position: fixed;
+      left: calc(var(--left-w) + var(--gap) * 2);
+      top:  calc(var(--top-h) + var(--gap) * 2);
+      z-index: 150;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: none;
+      width: 210px;
+      font-family: var(--font);
+      font-size: 12px;
+      color: var(--text-dim);
+      box-shadow: var(--shadow);
+    }
+
+    .pk-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .pk-header strong {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    #btnSuljePohjakuva {
+      background: none; border: none;
+      cursor: pointer; color: var(--text);
+      font-size: 15px; line-height: 1; padding: 0;
+      transition: color 0.15s;
+    }
+    #btnSuljePohjakuva:hover { color: 	#E5E4E2; }
+
+    #pohjakuvaKontrollit label {
+      display: block;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    #pohjakuvaKontrollit input[type=range] {
+      width: 100%;
+      margin-top: 4px;
+      accent-color: var(--accent);
+    }
+    #pohjakuvaKontrollit input[type=number] {
+      width: 100%;
+      margin-top: 4px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      padding: 5px 8px;
+      font-family: var(--font);
+      font-size: 12px;
+      outline: none;
+    }
+    #pohjakuvaKontrollit input[type=number]:focus { border-color: var(--accent); }
+
+    .pk-btn {
+      width: 100%; margin-top: 6px;
+      padding: 6px 0;
+      font-family: var(--font); font-size: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 4px; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .pk-btn:hover { background: var(--surface-3); color: var(--text); }
+
+    #kalibrointiInfo {
+      display: none; margin-top: 8px;
+      font-size: 11px; color: var(--danger); font-weight: 600;
+    }
+    #kalibrointiVahvistus { display: none; margin-top: 8px; }
+    #kalibrointiVahvistus input[type=number] {
+      width: 100%; margin: 4px 0 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px; color: var(--text);
+      padding: 5px 8px; font-family: var(--font); font-size: 12px;
+      outline: none;
+    }
+    .pk-btn-row { display: flex; gap: 6px; }
+    .pk-btn-row .pk-btn { flex: 1; margin-top: 0; }
+
+    /* PRIMITIIVIEN KONTROLLIT */
+    #primitiiviModal {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px 24px 22px;
+      z-index: 1000;
+      min-width: 290px;
+      box-shadow: var(--shadow);
+    }
+
+    #primitiiviModal h3 {
+      font-family: var(--font);
+      font-size: 11px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .modal-field { margin-bottom: 14px; }
+    .modal-field label {
+      display: block;
+      font-family: var(--font);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 5px;
+    }
+    .modal-field input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      padding: 8px 10px;
+      font-family: var(--font);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal-field input:focus { border-color: var(--accent); }
+
+    .modal-actions { display: flex; gap: 8px; margin-top: 22px; }
+    .modal-actions .btn { flex: 1; justify-content: center; }
+  </style>
+</head>
+<body>
+
+  <!-- YLÄPALKKI -->
+  <header id="topbar">
+    <div id="topbar-left">
+      <button id="buttonCamera" class="btn btn-accent">Vaihda 2D</button>
     </div>
-
-    <div id="katselu-wrap" class="menu-item">
-      <input type="radio" id="katselutila" name="tila" value="katselutila" checked>
-      <label for="katselutila">Katselu</label>
-    </div>
-
-    <div id="piirto-wrap" class="menu-item">
-      <input type="radio" id="piirtotila" name="tila" value="piirtotila" checked>
-      <label for="piirtotila">Piirto</label>
-    </div>
-
-    <div id="ikkuna-wrap" class="menu-item">
-      <input type="radio" id="ikkunatila" name="tila" value="ikkunatila" checked>
-      <label for="ikkunatila">Ikkuna</label>
-    </div>
-
-    <div id="ovi-wrap" class="menu-item">
-      <input type="radio" id="ovitila" name="tila" value="ovitila" checked>
-      <label for="ovitila">Ovi</label>
-    </div>
-
-    <div id="undo-wrap" class="menu-item" style="background: none;">
-      <button id="buttonUndo" title="Ctrl+Z">↩ Kumoa</button>
-    </div>
-
-  <div id="kaikki-wrap" class="menu-item">
-      <label class="switch">
-        <input type="checkbox" id="liikutaKaikkia">
-        <span class="slider"></span>
-      </label>
-      <span style="font-size: 14px; cursor: default;">Liikuta kaikkia</span>
-  </div>
-
-    <div id="save-wrap" class="menu-item" style="background: none;">
-    <button id="buttonSave" title="Tallenna (S)">💾 Tallenna</button>
-  </div>
-
-  <div id="load-wrap" class="menu-item" style="background: none;">
-    <label for="lataaTiedosto" class="custom-file-upload" title="Lataa (L)">
+    <div id="topbar-right">
+      <div id="undo-wrap">
+        <button id="buttonUndo" class="btn" title="Ctrl+Z">↩ Kumoa</button>
+      </div>
+      <div class="divider"></div>
+      <button id="buttonSave" class="btn" title="Tallenna (Ctrl+S)">💾 Tallenna</button>
+      <label class="btn btn-file" title="Lataa projekti">
         📂 Lataa
-    </label>
-    <input type="file" id="lataaTiedosto" accept=".json" style="display: none;">
-  </div>
+        <input type="file" id="lataaTiedosto" accept=".json">
+      </label>
+    </div>
+  </header>
 
-  <div id="suorakaide-wrap" class="menu-item" style="background: none;">
-    <button id="btnSuorakaide">Lisää suorakaide</button>
-  </div>
+  <!-- VASEN PANEELI -->
+  <nav id="leftpanel">
 
-  <div id="sylinteri-wrap" class="menu-item" style="background: none;">
-    <button id="btnSylinteri">Lisää sylinteri</button>
-  </div>
+    <div class="panel-section">
+      <div class="panel-heading">Työkalut</div>
 
-  <div id="pohjakuva-wrap" class="menu-item" style="background: none;">
-    <label for="lataaPohjakuvatiedosto" class="custom-file-upload" title="Lataa pohjakuva">
-        🗺️ Pohjakuva
-    </label>
-    <input type="file" id="lataaPohjakuvatiedosto" accept="image/*" style="display: none;">
-  </div>
+      <input class="tool-radio" type="radio" id="katselutila" name="tila" value="katselutila">
+      <label class="tool-label" for="katselutila">
+        <span class="tool-icon">👁</span> Katselu
+      </label>
 
+      <input class="tool-radio" type="radio" id="siirtelytila" name="tila" value="siirtelytila">
+      <label class="tool-label" for="siirtelytila">
+        <span class="tool-icon">✥</span> Siirtely
+      </label>
+
+      <input class="tool-radio" type="radio" id="piirtotila" name="tila" value="piirtotila">
+      <label class="tool-label" for="piirtotila">
+        <span class="tool-icon">✏</span> Piirto
+      </label>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-heading">Lisää</div>
+
+      <input class="tool-radio" type="radio" id="ovitila" name="tila" value="ovitila">
+      <label class="tool-label" for="ovitila">
+        <span class="tool-icon">🚪</span> Ovi
+      </label>
+
+      <input class="tool-radio" type="radio" id="ikkunatila" name="tila" value="ikkunatila">
+      <label class="tool-label" for="ikkunatila">
+        <span class="tool-icon">🪟</span> Ikkuna
+      </label>
+
+      <button id="btnSuorakaide" class="panel-btn">
+        <span class="tool-icon">▭</span> Suorakaide
+      </button>
+
+      <button id="btnSylinteri" class="panel-btn">
+        <span class="tool-icon">◯</span> Sylinteri
+      </button>
+
+      <!-- Pohjakuva: -->
+      <label class="panel-btn" style="cursor:pointer; position:relative; overflow:hidden;">
+        <span class="tool-icon">🗺️</span> Pohjakuva
+        <input type="file" id="lataaPohjakuvatiedosto" accept="image/*"
+               style="position:absolute; inset:0; opacity:0; cursor:pointer;">
+      </label>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-heading">Asetukset</div>
+      <label class="toggle-row" for="liikutaKaikkia">
+        <span class="toggle-label-text">Liikuta kaikkia</span>
+        <span class="switch">
+          <input type="checkbox" id="liikutaKaikkia">
+          <span class="slider"></span>
+        </span>
+      </label>
+    </div>
+
+  </nav>
+
+  <!-- POHJAKUVAN KONTROLLIT -->
   <div id="pohjakuvaKontrollit">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <strong>Pohjakuva</strong>
-        <button id="btnSuljePohjakuva" style="background:none; border:none; cursor:pointer; font-size:16px;">✕</button>
+    <div class="pk-header">
+      <strong>Pohjakuva</strong>
+      <button id="btnSuljePohjakuva">✕</button>
     </div>
     <label>Läpinäkyvyys:
-        <input type="range" id="sliderOpasiteetti" min="0.05" max="1" step="0.05" value="0.5">
+      <input type="range" id="sliderOpasiteetti" min="0.05" max="1" step="0.05" value="0.5">
     </label>
     <label>Leveys (m):
-        <input type="number" id="inputLeveys" min="0.5" max="200" step="0.5" value="10" style="width:100%">
+      <input type="number" id="inputLeveys" min="0.5" max="200" step="0.5" value="10">
     </label>
     <label>Korkeus (m):
-        <input type="number" id="inputKorkeus" min="0.5" max="200" step="0.5" value="10" style="width:100%">
+      <input type="number" id="inputKorkeus" min="0.5" max="200" step="0.5" value="10">
     </label>
-    <button id="btnKalibroi" style="width:100%; margin-top:4px">📐 Kalibroi mittakaava</button>
-    <div id="kalibrointiInfo" style="display:none; margin-top:6px; font-size:12px; color:#cc0000; font-weight:bold;"></div>
-    <div id="kalibrointiVahvistus" style="display:none; margin-top:6px;">
-        <label style="font-size:12px;">Oikea etäisyys (m):
-            <input type="number" id="kalibrointiEtaisyys" min="0.1" step="0.1" style="width:100%">
-        </label>
-        <button id="kalibrointiOK" style="margin-top:4px; margin-right:4px">✅ Käytä</button>
-        <button id="kalibrointiPeruuta">❌ Peruuta</button>
+    <button id="btnKalibroi" class="pk-btn">📐 Kalibroi mittakaava</button>
+    <div id="kalibrointiInfo"></div>
+    <div id="kalibrointiVahvistus">
+      <label style="font-size:11px;">Oikea etäisyys (m):
+        <input type="number" id="kalibrointiEtaisyys" min="0.1" step="0.1">
+      </label>
+      <div class="pk-btn-row">
+        <button id="kalibrointiOK" class="pk-btn">✅ Käytä</button>
+        <button id="kalibrointiPeruuta" class="pk-btn">❌ Peruuta</button>
+      </div>
     </div>
-    <button id="btnLukitsePohjakuva" style="width:100%; margin-top:4px">🔒 Lukitse (L)</button>
+    <button id="btnLukitsePohjakuva" class="pk-btn">🔒 Lukitse (L)</button>
   </div>
 
-    <div id="mittausLabel" style="
-    position:fixed;
-    background:white;
-    font-family: sans-serif;
-    font-weight: bold;
-    padding:4px 8px;
-    border-radius:10px;
-    pointer-events:none;
-    display:none">
+  <!-- SEINÄN MITTA -->
+  <div id="mittausLabel"></div>
+
+  <!-- PRIMITIIVIEN KONTROLLIT -->
+  <div id="primitiiviModal">
+    <h3 id="modalOtsikko"></h3>
+
+    <div class="modal-field">
+      <label>Nimi</label>
+      <input id="pNimi" type="text" placeholder="Vapaaehtoinen…">
     </div>
 
-  <div id="primitiiviModal" style="display:none; position:fixed; top:50%; left:50%;
-      transform:translate(-50%,-50%); background:#222; color:white; padding:24px;
-      border-radius:8px; z-index:1000; min-width:260px; font-family:Arial">
-  
-    <h3 id="modalOtsikko" style="margin-top:0"></h3>
-  
-    <label>Nimi: <input id="pNimi" type="text" style="width:100%"></label><br><br>
-  
     <div id="suorakaideKentat">
-      <label>Leveys (m): <input id="pLeveys" type="number" value="1" step="0.5" style="width:100%"></label><br><br>
-      <label>Syvyys (m): <input id="pSyvyys" type="number" value="1" step="0.5" style="width:100%"></label><br><br>
-      <label>Korkeus (m): <input id="pKorkeus" type="number" value="2.5" step="0.5" style="width:100%"></label>
+      <div class="modal-field">
+        <label>Leveys (m)</label>
+        <input id="pLeveys" type="number" value="1" step="0.5">
+      </div>
+      <div class="modal-field">
+        <label>Syvyys (m)</label>
+        <input id="pSyvyys" type="number" value="1" step="0.5">
+      </div>
+      <div class="modal-field">
+        <label>Korkeus (m)</label>
+        <input id="pKorkeus" type="number" value="2.5" step="0.5">
+      </div>
     </div>
 
     <div id="sylinteriKentat" style="display:none">
-      <label>Halkaisija (m): <input id="pHalkaisija" type="number" value="0.5" step="0.1" style="width:100%"></label><br><br>
-      <label>Korkeus (m): <input id="pSylKorkeus" type="number" value="2.5" step="0.5" style="width:100%"></label>
-    </div><br>
+      <div class="modal-field">
+        <label>Halkaisija (m)</label>
+        <input id="pHalkaisija" type="number" value="0.5" step="0.1">
+      </div>
+      <div class="modal-field">
+        <label>Korkeus (m)</label>
+        <input id="pSylKorkeus" type="number" value="2.5" step="0.5">
+      </div>
+    </div>
 
-    <button id="modalOK" style="margin-right:8px">Lisää</button>
-    <button id="modalPeruuta">Peruuta</button>
+    <div class="modal-actions">
+      <button id="modalOK" class="btn btn-accent">Lisää</button>
+      <button id="modalPeruuta" class="btn">Peruuta</button>
+    </div>
   </div>
 
-    <div id="sidebar">
-      <p style="color: white;">Objektin kääntäminen onnistuu painamalla mouse2 pohjassa (objektin päällä) ja liikuttamalla hiirtä
-                                  vaakasuunnassa
-      </p>
-      <p style="color: white;">Katselu ja piirtotilassa siirto kontrollit lukittu</p>
-      <p style="color: white;">Piirtäminen onnistuu piirtotilassa painamalla mouse1 pohjaan ja vetämällä haluamaansa suuntaan</p>
-      <p style="color: white;">Tällä hetkellä asetettu piirtotilaan 5 asteen kääntö pyöristys</p>
-      <p style="color: white;">Piirto tilassa myös kamera lukittu 2D kameraan</p>
-      <p style="color: white;">Ikkunan lisäys toimii ikkunalisäys tilassa, viemällä hiiren seinänpäälle tulee korostus ja siitä
-        klikkaamalla seinä muuttuu ikkunaksi
-      </p>
-      <p style="color: white">Oven lisäys toimii samalla tavalla kun ikkunan ja hiiren oikealla oven kätisyyttä voi kääntää</p>
-      <p style="color: white">Undo onnistuu painamalla Kumoa nappia tai näppäimistöltä "Ctrl+Z"</p>
-      <p style="color: white;">Objektin poistaminen onnistuu painamalla delete-näppäintä (objektin päällä siirtelytilassa)</p>
-      <p style="color: white;">Tallennus "Ctrl + S"</p>
-    </div>
-    <script type="module" src="/main.js"></script>
-    <script>
+  <!-- ALAPALKKI -->
+  <footer id="bottombar">
+    <span id="status-mode">Katselu</span>
+    <span id="status-desc">Selaa ja tarkastele pohjapiirustusta vapaasti.</span>
+  </footer>
+
+  <!-- KOODIT -->
+  <script type="module" src="/main.js"></script>
+
+  <script>
+    /* UNDO */
     document.getElementById('buttonUndo').addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('undo'));
+    });
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
         document.dispatchEvent(new CustomEvent('undo'));
+      }
     });
 
-      //Kumoa "Ctrl+Z"
-      document.addEventListener('keydown', (e) => {
-          if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-            e.preventDefault();
-            document.dispatchEvent(new CustomEvent('undo'));
-       }
+    /* ALAPALKIN STATUS */
+    const statusMode = document.getElementById('status-mode');
+    const statusDesc = document.getElementById('status-desc');
+
+    const modeInfo = {
+      katselutila:  { label: 'Katselu',  desc: 'Selaa ja tarkastele pohjapiirustusta vapaasti.' },
+      siirtelytila: { label: 'Siirtely', desc: 'Raahaa objekteja. Käännä seinää hiiren oikealla. Poista valittu objekti "Delete" -napilla' },
+      piirtotila:   { label: 'Piirto',   desc: 'Pidä hiiri pohjassa ja vedä piirtääksesi seinä. Kamera lukittu 2D-näkymään.' },
+      ikkunatila:   { label: 'Ikkuna',   desc: 'Vie hiiri seinän päälle ja klikkaa lisätäksesi ikkuna.' },
+      ovitila:      { label: 'Ovi',      desc: 'Vie hiiri seinän päälle ja klikkaa lisätäksesi ovi. Oven kätisyys kääntyy hiiren oikealla.' },
+    };
+
+    document.querySelectorAll('input[name="tila"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const info = modeInfo[e.target.value];
+        if (info) { statusMode.textContent = info.label; statusDesc.textContent = info.desc; }
       });
-    </script>
-  </body>
+    });
+
+    document.getElementById('liikutaKaikkia').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        statusMode.textContent = 'Liikuta kaikkia';
+        statusDesc.textContent = 'Kaikki objektit liikkuvat yhdessä. Siirtelytila aktivoitu automaattisesti.';
+      } else {
+        const checked = document.querySelector('input[name="tila"]:checked');
+        if (checked && modeInfo[checked.value]) {
+          statusMode.textContent = modeInfo[checked.value].label;
+          statusDesc.textContent = modeInfo[checked.value].desc;
+        }
+      }
+    });
+  </script>
+
+</body>
 </html>
