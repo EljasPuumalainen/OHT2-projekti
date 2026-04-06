@@ -89,22 +89,22 @@ window.addEventListener("mousemove", (event) => {
         let angle = Math.atan2(rawPoint.x - startPoint.x, rawPoint.z - startPoint.z);
 
         //2.5 Asteen lukitus piirtäessä
-        const step = 2.5 * (Math.PI / 180);
+        const step = 5 * (Math.PI / 180);
         angle = Math.round(angle / step) * step;
         currentWallGroup.rotation.y = angle;
         
         const endPoint = rawPoint.clone()
-        endPoint.x = Math.round(endPoint.x * 2) / 2;
-        endPoint.z = Math.round(endPoint.z * 2) / 2;
+        endPoint.x = Math.round(endPoint.x * 4) / 4;
+        endPoint.z = Math.round(endPoint.z * 4) / 4;
 
         const distance = startPoint.distanceTo(endPoint);
     
-        const pituus = Math.max(0.5, Math.round(distance * 2) / 2)
-        const palojenMaara = pituus / 0.5;
+        const pituus = Math.max(0.25, Math.round(distance * 4) / 4)
+        const palojenMaara = pituus / 0.25;
 
         // Lisää pituuselementin seinää piirtäessä
         const label = document.getElementById("mittausLabel");
-        label.textContent = pituus.toFixed(1) + " m";
+        label.textContent = pituus.toFixed(2) + " m";
         label.style.left = event.clientX + 15 + "px";
         label.style.top = event.clientY - 20 + "px";
         label.style.display = "block";
@@ -116,24 +116,13 @@ window.addEventListener("mousemove", (event) => {
         const material = new THREE.MeshStandardMaterial({color: 0xf0f0f0})
 
         for (let i=0; i < palojenMaara; i++) {
-            const geometry = new THREE.BoxGeometry(0.3, 2.5, 0.5);
+            const geometry = new THREE.BoxGeometry(0.3, 2.5, 0.25);
             const pala = new THREE.Mesh(geometry, material);
 
-            pala.position.set(0, 1.25, (i * 0.5) + 0.25)
+            pala.position.set(0, 1.25, i * 0.25 + 0.125)
             pala.userData.tyyppi = "seina"
 
             currentWallGroup.add(pala)
-
-            if (i === 0 || i === palojenMaara - 1) {
-                const tolppaGeo = new THREE.CylinderGeometry(0.15, 0.15, 2.5, 16);
-                const tolppa = new THREE.Mesh(tolppaGeo, material);
-        
-                // Jos i=0, tolppa on seinän alussa. Jos i=loppu, tolppa on seinän lopussa.
-                const zPos = (i === 0) ? (i * 0.5) : (i * 0.5) + 0.5;
-                tolppa.position.set(0, 1.25, zPos);
-                
-                currentWallGroup.add(tolppa);
-            }
         }
     }
 })
@@ -217,7 +206,7 @@ window.addEventListener("mousemove", (event) => {
                 );
                 
                 const seinanPituus = seinaPalat.reduce((yht, lapsi) => {
-                    if (lapsi.userData.tyyppi === "seina") return yht + 0.5;
+                    if (lapsi.userData.tyyppi === "seina") return yht + 0.25;
                     return yht + 1.0; // ikkuna tai ovi = 1m aukko
                 }, 0);
 
@@ -318,9 +307,12 @@ window.addEventListener("mousedown", (event) => {
     const keskiZ = hoverBox.position.z;
 
     if (ryhma) {
+
+        const ovenAlku = hoverBox.position.z - 0.5;
         const poistettavat = ryhma.children.filter(child =>
-            (child.userData.tyyppi === "seina" || child.userData.tyyppi === "tolppa") &&
-            Math.abs(child.position.z - keskiZ) < 0.74
+            child.userData.tyyppi === "seina" &&
+            child.position.z >= ovenAlku - 0.01 &&
+            child.position.z <= ovenAlku + 1.0 + 0.01
         );
 
         if (poistettavat.length > 0) {
@@ -328,10 +320,10 @@ window.addEventListener("mousedown", (event) => {
 
             if (ikkunaRadio.checked) {
                 lisaaIkkuna(ryhma, keskiZ);
-                undoHistory.push({ type: "ikkuna", ryhma, keskiZ, poistettavat });
+                undoHistory.push({ type: "ikkuna", ryhma, keskiZ: ovenAlku, poistettavat });
             } else if (oviRadio.checked) {
                 lisaaOvi(ryhma, keskiZ);
-                undoHistory.push({ type: "ovi", ryhma, keskiZ, poistettavat });
+                undoHistory.push({ type: "ovi", ryhma, keskiZ: ovenAlku, poistettavat });
             }
 
             hoverBox.visible = false;
