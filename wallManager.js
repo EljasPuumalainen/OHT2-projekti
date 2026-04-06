@@ -209,9 +209,17 @@ window.addEventListener("mousemove", (event) => {
 
             if (siirtelyTilaPaalla) {
 
-                const seinaPalat = ryhma.children.filter(lapsi => lapsi.userData && lapsi.userData.tyyppi === "seina");
-                const palojenMaara = seinaPalat.length;
-                const seinanPituus = palojenMaara * 0.5;
+                const seinaPalat = ryhma.children.filter(lapsi => lapsi.userData && (
+                    lapsi.userData.tyyppi === "seina" ||
+                    lapsi.userData.tyyppi === "ikkuna" ||
+                    lapsi.userData.tyyppi === "ovi"
+                    )
+                );
+                
+                const seinanPituus = seinaPalat.reduce((yht, lapsi) => {
+                    if (lapsi.userData.tyyppi === "seina") return yht + 0.5;
+                    return yht + 1.0; // ikkuna tai ovi = 1m aukko
+                }, 0);
 
                 hoverBoxSeina.scale.z = seinanPituus;
                 hoverBoxSeina.visible = true;
@@ -258,29 +266,66 @@ window.addEventListener("mousedown", (event) => {
     const oviRadio = document.getElementById("ovitila");
 
     if (!ikkunaRadio?.checked && !oviRadio?.checked) return;
-    
-    // Jos hoverBox ei ole näkyvissä, ei ole mitään mihin sijoittaa
+
+    // Tarkista osuuko klikki olemassa olevaan ikkunaan/oveen
+    const rect = renderer.domElement.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    const raycaster = new THREE.Raycaster();
+    if (getActiveCamera) raycaster.setFromCamera(mouse, getActiveCamera());
+
+    const allParts = [];
+    groupDragObjects.forEach(group => allParts.push(...group.children));
+    const intersects = raycaster.intersectObjects(allParts, true);
+
+    if (intersects.length > 0) {
+        let kohde = intersects[0].object;
+        let elementti = null;
+        while (kohde && kohde !== scene) {
+            if (kohde.userData?.tyyppi === "ikkuna" || kohde.userData?.tyyppi === "ovi") {
+                elementti = kohde;
+                break;
+            }
+            kohde = kohde.parent;
+        }
+
+        if (elementti) {
+            const ryhma = elementti.parent;
+            const keskiZ = elementti.position.z;
+
+            ryhma.remove(elementti);
+
+            const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
+            for (let i = 0; i < 2; i++) {
+                const geo = new THREE.BoxGeometry(0.3, 2.5, 0.5);
+                const pala = new THREE.Mesh(geo, material);
+                pala.position.set(0, 1.25, keskiZ - 0.25 + i * 0.5);
+                pala.userData.tyyppi = "seina";
+                ryhma.add(pala);
+            }
+
+            undoHistory.push({ type: "palautus", ryhma, elementti, keskiZ });
+            return;
+        }
+    }
+
+    // Alkuperäinen logiikka — lisää ikkuna tai ovi
     if (!hoverBox.visible) return;
 
-    // OTETAAN RYHMÄ JA SIJAINTI SUORAAN HOVERBOXILTA
-    // Tämä takaa, että ikkuna menee TÄSMÄLLEEN siihen missä esikatselu on
-    const ryhma = hoverBox.parent; 
+    const ryhma = hoverBox.parent;
     const keskiZ = hoverBox.position.z;
 
     if (ryhma) {
-        // Suodatetaan poistettavat palat. 
-        // Nostetaan etäisyyttä hieman (0.6 -> 0.7), jotta se nappaa varmasti 
-        // kaksi 0.5m palaa vaikka ne olisivat hieman epätarkasti sijoitettu
-        const poistettavat = ryhma.children.filter(child => 
-            (child.userData.tyyppi === "seina" || child.userData.tyyppi === "tolppa") && 
+        const poistettavat = ryhma.children.filter(child =>
+            (child.userData.tyyppi === "seina" || child.userData.tyyppi === "tolppa") &&
             Math.abs(child.position.z - keskiZ) < 0.74
         );
 
-        // Sallitaan sijoitus, jos ollaan seinän päällä (poistettavia löytyy)
-        // TAI jos haluat sallia sijoituksen tyhjään (poista tämä ehto)
         if (poistettavat.length > 0) {
             poistettavat.forEach(p => ryhma.remove(p));
-            
+
             if (ikkunaRadio.checked) {
                 lisaaIkkuna(ryhma, keskiZ);
                 undoHistory.push({ type: "ikkuna", ryhma, keskiZ, poistettavat });
@@ -288,8 +333,7 @@ window.addEventListener("mousedown", (event) => {
                 lisaaOvi(ryhma, keskiZ);
                 undoHistory.push({ type: "ovi", ryhma, keskiZ, poistettavat });
             }
-            
-            // Piilotetaan hoverBox hetkeksi, jotta se lasketaan uudelleen seuraavassa liikkeessä
+
             hoverBox.visible = false;
         } else {
             console.warn("Ei seinäpaloja kohdalla!", {
