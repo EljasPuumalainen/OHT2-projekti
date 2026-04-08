@@ -73,3 +73,67 @@ export function lisaaSylinteri(halkaisija, korkeus, nimi) {
     undoHistory.push({ type: "primitiivi", object: group });
     paivitaRaahaus();
 }
+
+// Lisää portaat sceneen annetuilla mitoilla ja nimellä
+export function lisaaPortaat(leveys, syvyys, korkeus, askelmia, nimi) {
+    const group = new THREE.Group();
+
+    // Varmistetaan järkevät arvot
+    askelmia = Math.max(2, Math.floor(askelmia));
+    leveys = Math.max(0.2, leveys);
+    syvyys = Math.max(0.2, syvyys);
+    korkeus = Math.max(0.2, korkeus);
+
+    const askelmanSyvyys = syvyys / askelmia;
+    const askelmanKorkeus = korkeus / askelmia;
+
+    for (let i = 0; i < askelmia; i++) {
+        const askelmanKokonaisKorkeus = (i + 1) * askelmanKorkeus;
+
+        const geo = new THREE.BoxGeometry(
+            leveys,
+            askelmanKokonaisKorkeus,
+            askelmanSyvyys
+        );
+
+        // Kevyt vuorottelu auttaa 2D-näkymässä erottumaan
+        const vari = i % 2 === 0 ? 0xcfcfcf : 0xb8b8b8;
+        const mat = new THREE.MeshStandardMaterial({ color: vari });
+
+        const mesh = new THREE.Mesh(geo, mat);
+
+        // Rakennetaan portaat Z-suunnassa eteenpäin
+        mesh.position.set(
+            0,
+            askelmanKokonaisKorkeus / 2,
+            -syvyys / 2 + askelmanSyvyys / 2 + i * askelmanSyvyys
+        );
+
+        mesh.userData.tyyppi = 'porras_askelma';
+        group.add(mesh);
+
+        // Reunaviivat tekevät portaista paljon selkeämmät 2D:ssä
+        const edges = new THREE.EdgesGeometry(geo);
+        const line = new THREE.LineSegments(
+            edges,
+            new THREE.LineBasicMaterial({ color: 0x222222 })
+        );
+        line.position.copy(mesh.position);
+        line.userData.tyyppi = 'porras_reuna';
+        group.add(line);
+    }
+
+    if (nimi) {
+        group.add(luoNimiLabel(nimi, korkeus));
+    }
+
+    group.userData.tyyppi = 'primitiivi';
+    group.userData.alatyyppi = 'portaat';
+    group.userData.nimi = nimi;
+    group.userData.mitat = { leveys, syvyys, korkeus, askelmia };
+
+    scene.add(group);
+    groupDragObjects.push(group);
+    undoHistory.push({ type: "primitiivi", object: group });
+    paivitaRaahaus();
+}

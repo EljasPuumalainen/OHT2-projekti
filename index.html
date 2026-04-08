@@ -531,6 +531,10 @@
         <span class="tool-icon">◯</span> Sylinteri
       </button>
 
+      <button id="btnPortaat" class="panel-btn">
+        <span class="tool-icon">≣</span> Portaat
+      </button>
+
       <!-- Pohjakuva: -->
       <label class="panel-btn" style="cursor:pointer; position:relative; overflow:hidden;">
         <span class="tool-icon">🗺️</span> Pohjakuva
@@ -618,6 +622,27 @@
         <input id="pSylKorkeus" type="number" value="2.5" step="0.5">
       </div>
     </div>
+
+    <div id="portaatKentat" style="display:none">
+      <div class="modal-field">
+        <label>Leveys (m)</label>
+        <input id="portaidenLeveys" type="number" value="2" step="0.5">
+      </div>
+      <div class="modal-field">
+        <label>Syvyys (m)</label>
+        <input id="portaidenSyvyys" type="number" value="3" step="0.5">
+      </div>
+      <div class="modal-field">
+        <label>Korkeus (m)</label>
+        <input id="portaidenKorkeus" type="number" value="1.5" step="0.1">
+      </div>
+      <div class="modal-field">
+        <label>Askelmien määrä</label>
+        <input id="portaidenAskelmat" type="number" value="6" step="1" min="2">
+      </div>
+    </div>
+
+    
 
     <div class="modal-actions">
       <button id="modalOK" class="btn btn-accent">Lisää</button>
