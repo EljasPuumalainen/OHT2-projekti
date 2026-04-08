@@ -32,120 +32,147 @@ window.addEventListener("mousemove", (event) => {
 
 window.addEventListener("mousedown", (event) => {
 
-    if (event.clientX < 200 && event.clientY < 500) {
-        return;
-    }
-
-    if (!isDrawing || event.button !== 0)
-        return;
+    if (event.clientX < 200 && event.clientY < 500) return;
+    if (!isDrawing) return;
 
     const rect = renderer.domElement.getBoundingClientRect();
-
     const mouse = new THREE.Vector2(
         ((event.clientX - rect.left) / rect.width) * 2 - 1,
         -((event.clientY - rect.top) / rect.height) * 2 + 1
     );
+    const raycaster = new THREE.Raycaster();
+    if (getActiveCamera) raycaster.setFromCamera(mouse, getActiveCamera());
 
-    const raycaster = new THREE.Raycaster()
-    if (getActiveCamera) {
-        raycaster.setFromCamera(mouse, getActiveCamera());
-    }
-    const intersects = raycaster.intersectObject(drawingPlane)
+    if (event.button === 2) {
+        // Oikea nappi — venytys päädystä
+        if (!hoverBoxPaaty.visible) return;
 
-    if (intersects.length > 0) {
-        isDrawing = true;
-        startPoint.x = Math.round(intersects[0].point.x * 2) / 2;
-        startPoint.z = Math.round(intersects[0].point.z * 2) / 2;
-        startPoint.y = 0;
+        const allParts = [];
+        groupDragObjects.forEach(g => allParts.push(...g.children));
+        const seinaIntersects = raycaster.intersectObjects(allParts, true);
+        if (seinaIntersects.length === 0) return;
 
-        currentWallGroup = new THREE.Group()
-        currentWallGroup.position.copy(startPoint)
-        scene.add(currentWallGroup)
+        let topRyhma = seinaIntersects[0].object;
+        while (topRyhma.parent && !groupDragObjects.includes(topRyhma)) {
+            topRyhma = topRyhma.parent;
+        }
+        if (!groupDragObjects.includes(topRyhma)) return;
 
+        const pituus = topRyhma.children.reduce((yht, l) => {
+            if (l.userData?.tyyppi === "seina") return yht + 0.25;
+            if (l.userData?.tyyppi === "ikkuna" || l.userData?.tyyppi === "ovi") return yht + 1.0;
+            return yht;
+        }, 0);
+
+        const paikallinenPiste = topRyhma.worldToLocal(seinaIntersects[0].point.clone());
+        if (Math.abs(paikallinenPiste.z - pituus) >= 0.4) return;
+
+        const index = groupDragObjects.indexOf(topRyhma);
+        if (index !== -1) groupDragObjects.splice(index, 1);
+
+        currentWallGroup = topRyhma;
+        const maailmaPos = new THREE.Vector3();
+        topRyhma.getWorldPosition(maailmaPos);
+        startPoint.set(maailmaPos.x, 0, maailmaPos.z);
         controls2D.enabled = false;
+        hoverBoxPaaty.visible = false;
+
+    } else if (event.button === 0) {
+        // Vasen nappi — normaali piirto
+        const intersects = raycaster.intersectObject(drawingPlane);
+        if (intersects.length > 0) {
+            startPoint.x = Math.round(intersects[0].point.x * 2) / 2;
+            startPoint.z = Math.round(intersects[0].point.z * 2) / 2;
+            startPoint.y = 0;
+
+            currentWallGroup = new THREE.Group();
+            currentWallGroup.position.copy(startPoint);
+            scene.add(currentWallGroup);
+            controls2D.enabled = false;
+        }
     }
 });
-    
+
 window.addEventListener("mousemove", (event) => {
-    if (!isDrawing || !currentWallGroup)
-        return;
+    if (!isDrawing || !currentWallGroup) return;
 
     const rect = renderer.domElement.getBoundingClientRect();
-
     const mouse = new THREE.Vector2(
         ((event.clientX - rect.left) / rect.width) * 2 - 1,
         -((event.clientY - rect.top) / rect.height) * 2 + 1
     );
+    const raycaster = new THREE.Raycaster();
+    if (getActiveCamera) raycaster.setFromCamera(mouse, getActiveCamera());
 
-    const raycaster = new THREE.Raycaster()
-    if (getActiveCamera) {
-        raycaster.setFromCamera(mouse, getActiveCamera());
-    }
-    const intersects = raycaster.intersectObject(drawingPlane)
-
+    const intersects = raycaster.intersectObject(drawingPlane);
     if (intersects.length > 0) {
         const rawPoint = intersects[0].point;
 
         let angle = Math.atan2(rawPoint.x - startPoint.x, rawPoint.z - startPoint.z);
-
-        //2.5 Asteen lukitus piirtäessä
         const step = 5 * (Math.PI / 180);
         angle = Math.round(angle / step) * step;
         currentWallGroup.rotation.y = angle;
-        
-        const endPoint = rawPoint.clone()
+
+        const endPoint = rawPoint.clone();
         endPoint.x = Math.round(endPoint.x * 4) / 4;
         endPoint.z = Math.round(endPoint.z * 4) / 4;
 
         const distance = startPoint.distanceTo(endPoint);
-    
-        const pituus = Math.max(0.25, Math.round(distance * 4) / 4)
+        const pituus = Math.max(0.25, Math.round(distance * 4) / 4);
         const palojenMaara = pituus / 0.25;
 
-        // Lisää pituuselementin seinää piirtäessä
         const label = document.getElementById("mittausLabel");
         label.textContent = pituus.toFixed(2) + " m";
         label.style.left = event.clientX + 15 + "px";
         label.style.top = event.clientY - 20 + "px";
         label.style.display = "block";
 
-        while (currentWallGroup.children.length > 0) {
-            currentWallGroup.remove(currentWallGroup.children[0])
-        }
+        // Poistetaan vain seinäpalat, ikkunat/ovet säilyvät
+        const vanhat = currentWallGroup.children.filter(l => l.userData?.tyyppi === "seina");
+        vanhat.forEach(p => currentWallGroup.remove(p));
 
-        const material = new THREE.MeshStandardMaterial({color: 0xf0f0f0})
+        // Ikkunoiden/ovien varaamat alueet
+        const esteet = currentWallGroup.children
+            .filter(l => l.userData?.tyyppi === "ikkuna" || l.userData?.tyyppi === "ovi")
+            .map(l => ({ alku: l.position.z, loppu: l.position.z + 1.0 }));
 
-        for (let i=0; i < palojenMaara; i++) {
+        const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
+
+        for (let i = 0; i < palojenMaara; i++) {
+            const zKeski = i * 0.25 + 0.125;
+            if (esteet.some(e => zKeski >= e.alku && zKeski < e.loppu)) continue;
+
             const geometry = new THREE.BoxGeometry(0.3, 2.5, 0.25);
             const pala = new THREE.Mesh(geometry, material);
-
-            pala.position.set(0, 1.25, i * 0.25 + 0.125)
-            pala.userData.tyyppi = "seina"
-
-            currentWallGroup.add(pala)
+            pala.position.set(0, 1.25, zKeski);
+            pala.userData.tyyppi = "seina";
+            currentWallGroup.add(pala);
         }
     }
-})
+});
 
 window.addEventListener("mouseup", (event) => {
-    if (event.button === 0 && isDrawing) {
+    if (!isDrawing) return;
 
+    const onVenytys = event.button === 2 && currentWallGroup && !groupDragObjects.includes(currentWallGroup);
+
+    if (event.button === 0 || onVenytys) {
         if (currentWallGroup && document.getElementById("mittausLabel")) {
-            document.getElementById("mittausLabel").style.display = "none"
+            document.getElementById("mittausLabel").style.display = "none";
         }
 
-        //Jos seinä on alle 1m, sitä ei lisätä
         if (currentWallGroup && currentWallGroup.children.length >= 1) {
             groupDragObjects.push(currentWallGroup);
             undoHistory.push({ type: "seina", object: currentWallGroup });
-            paivitaRaahaus()
+            paivitaRaahaus();
         } else if (currentWallGroup) {
-            scene.remove(currentWallGroup)
+            scene.remove(currentWallGroup);
         }
+
         currentWallGroup = null;
         controls2D.enabled = true;
     }
-})
+});
 
 //Korostus toiminnot
 export const hoverBoxGeo = new THREE.BoxGeometry(0.31, 2.51, 1.01);
@@ -160,14 +187,22 @@ const hoverBoxSeinaMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transpar
 export const hoverBoxSeina = new THREE.Mesh(hoverBoxSeinaGeo, hoverBoxSeinaMat);
 hoverBoxSeina.visible = false;
 
+const hoverBoxPaatyGeo = new THREE.BoxGeometry(0.35, 2.55, 0.35);
+const hoverBoxPaatyMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.5 });
+export const hoverBoxPaaty = new THREE.Mesh(hoverBoxPaatyGeo, hoverBoxPaatyMat);
+hoverBoxPaaty.visible = false;
+scene.add(hoverBoxPaaty);
+
 window.addEventListener("mousemove", (event) => {
     const ikkunaTilaPaalla = document.getElementById("ikkunatila").checked;
     const oviTilaPaalla = document.getElementById("ovitila").checked;
     const siirtelyTilaPaalla = document.getElementById("siirtelytila").checked;
     const liikutaKaikkia = document.getElementById("liikutaKaikkia").checked;
+    const piirtoTilaPaalla = document.getElementById("piirtotila").checked;
 
     hoverBox.visible = false;
     hoverBoxSeina.visible = false;
+    hoverBoxPaaty.visible = false;
     
     if (ikkunaTilaPaalla || oviTilaPaalla || siirtelyTilaPaalla) {
       
@@ -181,13 +216,12 @@ window.addEventListener("mousemove", (event) => {
 
         const raycaster = new THREE.Raycaster();
         if (getActiveCamera) {
-        raycaster.setFromCamera(mouse, getActiveCamera());
+            raycaster.setFromCamera(mouse, getActiveCamera());
         }
 
         hoverBox.raycast = () => null;
         hoverBoxSeina.raycast = () => null;
 
-        // Etsitään osumia kaikista seinäryhmien lapsista
         const allParts = [];
         groupDragObjects.forEach(group => allParts.push(...group.children));
         
@@ -197,17 +231,15 @@ window.addEventListener("mousemove", (event) => {
             const ryhma = intersects[0].object.parent;
 
             if (siirtelyTilaPaalla) {
-
                 const seinaPalat = ryhma.children.filter(lapsi => lapsi.userData && (
                     lapsi.userData.tyyppi === "seina" ||
                     lapsi.userData.tyyppi === "ikkuna" ||
                     lapsi.userData.tyyppi === "ovi"
-                    )
-                );
+                ));
                 
                 const seinanPituus = seinaPalat.reduce((yht, lapsi) => {
                     if (lapsi.userData.tyyppi === "seina") return yht + 0.25;
-                    return yht + 1.0; // ikkuna tai ovi = 1m aukko
+                    return yht + 1.0;
                 }, 0);
 
                 hoverBoxSeina.scale.z = seinanPituus;
@@ -222,13 +254,9 @@ window.addEventListener("mousemove", (event) => {
                 }
 
             } else if (ikkunaTilaPaalla || oviTilaPaalla) {
-            
-                // Muutetaan maailman Z-koordinaatti ryhmän paikalliseksi koordinaatiksi
                 const maailmaPiste = intersects[0].point;
                 const paikallinenPiste = ryhma.worldToLocal(maailmaPiste.clone());
                 const zPos = paikallinenPiste.z;
-
-                // Nyt pyöristys toimii tarkan hiiren sijainnin mukaan 0.5m välein
                 const uusiPosz = Math.round(zPos * 2) / 2;
 
                 hoverBox.visible = true;
@@ -240,9 +268,44 @@ window.addEventListener("mousemove", (event) => {
                 ryhma.add(hoverBox);
             }
         }
+
         if (event.buttons === 1 && siirtelyTilaPaalla) {
-            // Jos nappi on pohjassa, älä anna visible-tilan muuttua falseksi
             hoverBoxSeina.visible = (hoverBoxSeina.parent !== null); 
+        }
+    }
+
+    // Päädyn korostus — tämä on NYT lohkon ulkopuolella, toimii piirtotilassa
+    if (piirtoTilaPaalla && !currentWallGroup) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+            ((event.clientX - rect.left) / rect.width) * 2 - 1,
+            -((event.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        const raycaster = new THREE.Raycaster();
+        if (getActiveCamera) raycaster.setFromCamera(mouse, getActiveCamera());
+
+        const allParts2 = [];
+        groupDragObjects.forEach(g => allParts2.push(...g.children));
+        const paatyIntersects = raycaster.intersectObjects(allParts2, true);
+
+        if (paatyIntersects.length > 0) {
+            let topRyhma = paatyIntersects[0].object;
+            while (topRyhma.parent && !groupDragObjects.includes(topRyhma)) {
+                topRyhma = topRyhma.parent;
+            }
+            if (groupDragObjects.includes(topRyhma)) {
+                const pituus = topRyhma.children.reduce((yht, l) => {
+                    if (l.userData?.tyyppi === "seina") return yht + 0.25;
+                    if (l.userData?.tyyppi === "ikkuna" || l.userData?.tyyppi === "ovi") return yht + 1.0;
+                    return yht;
+                }, 0);
+                const paikallinenPiste = topRyhma.worldToLocal(paatyIntersects[0].point.clone());
+                if (Math.abs(paikallinenPiste.z - pituus) < 0.4) {
+                    hoverBoxPaaty.visible = true;
+                    hoverBoxPaaty.position.copy(topRyhma.localToWorld(new THREE.Vector3(0, 1.25, pituus)));
+                    hoverBoxPaaty.rotation.copy(topRyhma.rotation);
+                }
+            }
         }
     }
 });
