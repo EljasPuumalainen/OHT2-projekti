@@ -175,14 +175,14 @@ window.addEventListener("mouseup", (event) => {
 });
 
 //Korostus toiminnot
-export const hoverBoxGeo = new THREE.BoxGeometry(0.31, 2.51, 1.01);
+export const hoverBoxGeo = new THREE.BoxGeometry(0.31, 2.51, 1);
 export const hoverBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBox = new THREE.Mesh(hoverBoxGeo, hoverBoxMat);
 
 scene.add(hoverBox);
 hoverBox.visible = false;
 
-const hoverBoxSeinaGeo = new THREE.BoxGeometry(0.31, 2.51, 1.01); 
+const hoverBoxSeinaGeo = new THREE.BoxGeometry(0.31, 2.51, 1); 
 const hoverBoxSeinaMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBoxSeina = new THREE.Mesh(hoverBoxSeinaGeo, hoverBoxSeinaMat);
 hoverBoxSeina.visible = false;
