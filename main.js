@@ -9,6 +9,7 @@ import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat} from './objectManager.js
 import { lataaPohjakuva, asetaOpasiteetti, asetaLeveys, asetaKorkeus, toggleLukitus, onkoLukittu, onkoPohjakuva, initImageManager, startKalibrointi, initKalibrointiNapit } from './imageManager.js';
 import { aktivoiMaster, deaktivoiMaster } from './dragAll.js';
 
+import { initSelection } from './selection.js';
 
 let activeCamera = camera3d;
 
@@ -43,6 +44,14 @@ export let groupDragControls
 
 export let dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
 dragControls.transformGroup = true; // Lisää tämä rivi kaikkialle missä luot dragControlsit
+
+initSelection(
+    () => activeCamera, 
+    () => (activeCamera === camera3d ? controls3D : controls2D),
+    groupDragControls
+    
+);
+
 paivitaRaahaus()
 
 setDrawing(true)
@@ -92,6 +101,7 @@ function paivitaTila() {
 
     if (siirtelyRadio.checked) {
         dragControls.enabled = true;
+        if (groupDragControls) groupDragControls.enabled = true;
         setDrawing(false)
         enableBtn();
 
@@ -359,6 +369,18 @@ window.addEventListener("DOMContentLoaded", () => {
 })
 
 export function paivitaRaahaus() {
+
+    const onkoAlueValittu = groupDragControls && 
+                           groupDragControls.objects.length === 1 && 
+                           (groupDragControls.objects[0].name === "ALUEVALINTA_RYHMA" || 
+                            groupDragControls.objects[0].name === "MASTER_SYSTEM");
+
+    if (onkoAlueValittu) {
+        console.log("Aluevalinta aktiivinen, ohitetaan nollaus.");
+        return; 
+    }
+
+
     // Siivotaan vanhat pois
     if (dragControls) dragControls.dispose();
     if (groupDragControls) groupDragControls.dispose();
