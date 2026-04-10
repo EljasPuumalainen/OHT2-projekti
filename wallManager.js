@@ -735,10 +735,10 @@ export function setupDeleteEvents() {
 
         if (!siirtelyRadio || !siirtelyRadio.checked) return;
 
-        console.log("[Poisto] keydown:", event.key);
+        //console.log("[Poisto] keydown:", event.key);
 
         if (!selectedObject) {
-            console.log("[Poisto] Ei valittua objektia");
+            //console.log("[Poisto] Ei valittua objektia");
             return;
         }
 
