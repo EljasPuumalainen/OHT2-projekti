@@ -14,9 +14,6 @@ selectionBox.classList.add('selection-box');
 document.body.appendChild(selectionBox);
 
 
-const frustum = new THREE.Frustum();
-const projScreenMatrix = new THREE.Matrix4();
-
 export function initSelection(getActiveCamera, getActiveControls, groupDragControls) {
     
     window.addEventListener('mousedown', (e) => {
@@ -92,16 +89,31 @@ export function initSelection(getActiveCamera, getActiveControls, groupDragContr
         const valitut = [];
 
         groupDragObjects.forEach(group => {
-            const vector = new THREE.Vector3();
-            group.getWorldPosition(vector);
-            vector.project(camera);
+        // Haetaan seinän geometriaan perustuva laatikko (Bounding Box)
+        const box = new THREE.Box3().setFromObject(group);
+        const points = [
+            new THREE.Vector3(box.min.x, 0, box.min.z), // Alkupiste
+            new THREE.Vector3(box.max.x, 0, box.max.z), // Loppupiste
+            new THREE.Vector3(
+                (box.min.x + box.max.x) / 2, 0, (box.min.z + box.max.z) / 2
+            ) // Keskipiste varmuuden vuoksi
+        ];
 
-            const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
-            const y = (-(vector.y * 0.5) + 0.5) * window.innerHeight;
+        let osuu = false;
+
+        points.forEach(pt => {
+            pt.project(camera);
+            const x = (pt.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-(pt.y * 0.5) + 0.5) * window.innerHeight;
 
             if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-                valitut.push(group);
+                osuu = true;
             }
+        });
+
+        if (osuu) {
+            valitut.push(group);
+        }
         });
 
         if (valitut.length > 0) {
