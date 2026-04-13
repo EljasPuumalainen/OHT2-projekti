@@ -3,12 +3,13 @@ import * as THREE from 'three';
 import { DragControls } from 'three/addons/controls/DragControls.js';
 
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, setupDeleteEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, lisaaOvi, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
+import { setupTurnEvents, setupDeleteEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
-import { lisaaSuorakaide, lisaaSylinteri } from './objectManager.js';
+import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat} from './objectManager.js';
 import { lataaPohjakuva, asetaOpasiteetti, asetaLeveys, asetaKorkeus, toggleLukitus, onkoLukittu, onkoPohjakuva, initImageManager, startKalibrointi, initKalibrointiNapit } from './imageManager.js';
 import { aktivoiMaster, deaktivoiMaster } from './dragAll.js';
 
+import { initSelection } from './selection.js';
 
 let activeCamera = camera3d;
 
@@ -43,6 +44,14 @@ export let groupDragControls
 
 export let dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
 dragControls.transformGroup = true; // Lisää tämä rivi kaikkialle missä luot dragControlsit
+
+initSelection(
+    () => activeCamera, 
+    () => (activeCamera === camera3d ? controls3D : controls2D),
+    groupDragControls
+    
+);
+
 paivitaRaahaus()
 
 setDrawing(true)
@@ -92,6 +101,7 @@ function paivitaTila() {
 
     if (siirtelyRadio.checked) {
         dragControls.enabled = true;
+        if (groupDragControls) groupDragControls.enabled = true;
         setDrawing(false)
         enableBtn();
 
@@ -179,6 +189,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const suorakaide = document.getElementById('btnSuorakaide');
     const sylinteri = document.getElementById('btnSylinteri');
+    const portaat = document.getElementById('btnPortaat');
     const modalOK = document.getElementById('modalOK');
     const modalPeruuta = document.getElementById('modalPeruuta');
 
@@ -256,6 +267,7 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('modalOtsikko').textContent = 'Lisää suorakaide';
         document.getElementById('suorakaideKentat').style.display = 'block';
         document.getElementById('sylinteriKentat').style.display = 'none';
+        document.getElementById('portaatKentat').style.display = 'none';
         document.getElementById('primitiiviModal').style.display = 'block';
     });
 
@@ -264,6 +276,17 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('modalOtsikko').textContent = 'Lisää sylinteri';
         document.getElementById('suorakaideKentat').style.display = 'none';
         document.getElementById('sylinteriKentat').style.display = 'block';
+        document.getElementById('portaatKentat').style.display = 'none';
+        document.getElementById('primitiiviModal').style.display = 'block';
+    });
+
+    portaat.addEventListener('click', () => {
+        modalTyyppi = 'portaat';
+        document.getElementById('pNimi').parentElement.style.display = 'none';
+        document.getElementById('modalOtsikko').textContent = 'Lisää portaat';
+        document.getElementById('suorakaideKentat').style.display = 'none';
+        document.getElementById('sylinteriKentat').style.display = 'none';
+        document.getElementById('portaatKentat').style.display = 'block';
         document.getElementById('primitiiviModal').style.display = 'block';
     });
 
@@ -278,6 +301,13 @@ window.addEventListener("DOMContentLoaded", () => {
             const h = parseFloat(document.getElementById('pHalkaisija').value);
             const k = parseFloat(document.getElementById('pSylKorkeus').value);
             lisaaSylinteri(h, k, nimi);
+        }
+        else if (modalTyyppi === 'portaat') {
+            const l = parseFloat(document.getElementById('portaidenLeveys').value);
+            const s = parseFloat(document.getElementById('portaidenSyvyys').value);
+            const k = parseFloat(document.getElementById('portaidenKorkeus').value);
+            const a = parseInt(document.getElementById('portaidenAskelmat').value, 10);
+            lisaaPortaat(l, s, k, a, nimi);
         }
         document.getElementById('primitiiviModal').style.display = 'none';
     });
@@ -339,6 +369,18 @@ window.addEventListener("DOMContentLoaded", () => {
 })
 
 export function paivitaRaahaus() {
+
+    const onkoAlueValittu = groupDragControls && 
+                           groupDragControls.objects.length === 1 && 
+                           (groupDragControls.objects[0].name === "ALUEVALINTA_RYHMA" || 
+                            groupDragControls.objects[0].name === "MASTER_SYSTEM");
+
+    if (onkoAlueValittu) {
+        console.log("Aluevalinta aktiivinen, ohitetaan nollaus.");
+        return; 
+    }
+
+
     // Siivotaan vanhat pois
     if (dragControls) dragControls.dispose();
     if (groupDragControls) groupDragControls.dispose();

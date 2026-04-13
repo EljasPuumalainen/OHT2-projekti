@@ -5,468 +5,8 @@
   <title>Pohjapiirrossovellus</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:           #fffefe;
-      --surface:      #000000;
-      --surface-2:    rgb(46, 45, 45);
-      --surface-3:    #3d3d3d;
-      --border:       #4e4d4d;
-      --accent:       #ffffff;
-      --accent-dim:   rgba(169, 169, 169);
-      --accent-mid:   rgb(46, 45, 45);
-      --text:         #9c9c9c;
-      --text-dim:     #ffffff;
-      --text-muted:   #000000;
-      --danger:       #e05555;
-      --font:         'Outfit', sans-serif;
-      --mono:         'Space Mono', monospace;
-
-      /* kelluvien elementtien väli */
-      --gap:          10px;
-
-      /* johdetut mitat, paneelit on upotettu --gap:n verran joka puolelta */
-      --top-h:        52px;
-      --left-w:       210px;
-      --bottom-h:     42px;
-
-      /* yhteistä visuaalisuutta */
-      --radius:       10px;
-      --shadow:       0 8px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.03);
-    }
-
-    body {
-      margin: 0;
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
-    }
-
-    /* ruudukkorakenne */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(77,142,240,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(77,142,240,0.03) 1px, transparent 1px);
-      background-size: 32px 32px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* YLÄPALKKI */
-    #topbar {
-      position: fixed;
-      top: var(--gap);
-      left: var(--gap);
-      right: var(--gap);
-      height: var(--top-h);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      z-index: 200;
-    }
-
-    #topbar-left, #topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .logo {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-right: 16px;
-      user-select: none;
-    }
-
-    .divider {
-      width: 1px;
-      height: 20px;
-      background: var(--border);
-      margin: 0 4px;
-    }
-
-    /* NAPIT */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 13px;
-      border-radius: 5px;
-      font-size: 12px;
-      font-family: var(--font);
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--surface-2);
-      color: var(--text-dim);
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-      white-space: nowrap;
-    }
-    .btn:hover:not(:disabled) {
-      background: var(--surface-3);
-      color: var(--text);
-      border-color: #363650;
-    }
-    .btn:disabled { opacity: 0.38; cursor: not-allowed; }
-
-    .btn-accent {
-      background: var(--accent-mid);
-      border-color: var(--border);
-      color: var(--accent);
-    }
-    .btn-accent:hover:not(:disabled) {
-      background: var(--accent-dim);
-      color: #000000;
-    }
-
-    /* tiedostonsyöttö */
-    .btn-file {
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    .btn-file input[type=file] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    /* UNDO */
-    #undo-wrap { display: none; }
-
-    /* VASEN PANEELI */
-    #leftpanel {
-      position: fixed;
-      top: calc(var(--top-h) + var(--gap) * 2);
-      left: var(--gap);
-      width: var(--left-w);
-      height: fit-content;
-      max-height: calc(100vh - var(--bottom-h) - var(--gap) * 3);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow-y: auto;
-      z-index: 100;
-      padding: 8px 0 16px;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
-    }
-    #leftpanel::-webkit-scrollbar { width: 4px; }
-    #leftpanel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-    .panel-section { padding: 6px 0; }
-    .panel-section + .panel-section {
-      border-top: 1px solid var(--border);
-      margin-top: 2px;
-      padding-top: 10px;
-    }
-
-    .panel-heading {
-      font-family: var(--mono);
-      font-size: 8.5px;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: rgb(255, 255, 255);
-      padding: 2px 15px 8px;
-      user-select: none;
-    }
-
-    .tool-radio { display: none; }
-
-    .tool-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 15px;
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--text-dim);
-      border-left: 2px solid transparent;
-      transition: background 0.12s, color 0.12s, border-color 0.12s;
-      user-select: none;
-    }
-    .tool-label:hover { background: var(--surface-2); color: var(--text); }
-    .tool-radio:checked + .tool-label {
-      color: var(--accent);
-      border-left-color: var(--accent);
-      background: var(--accent-dim);
-    }
-
-    /* toimintopainikkeet */
-    .panel-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 15px;
-      width: 100%;
-      font-size: 13px;
-      font-family: var(--font);
-      color: var(--text-dim);
-      background: none;
-      border: none;
-      border-left: 2px solid transparent;
-      cursor: pointer;
-      text-align: left;
-      transition: background 0.12s, color 0.12s;
-    }
-    .panel-btn:hover { background: var(--surface-2); color: var(--text); }
-
-    .tool-icon {
-      font-size: 14px;
-      width: 18px;
-      text-align: center;
-      flex-shrink: 0;
-      opacity: 0.85;
-    }
-
-    /* liikuta kaikkia - toggle */
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 9px 15px;
-      cursor: pointer;
-    }
-    .toggle-label-text { font-size: 13px; color: var(--text-dim); }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 32px; height: 18px;
-      flex-shrink: 0;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background: var(--surface-3);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      transition: .22s;
-    }
-    .slider::before {
-      content: '';
-      position: absolute;
-      height: 12px; width: 12px;
-      left: 2px; bottom: 2px;
-      background: var(--text-muted);
-      border-radius: 50%;
-      transition: .22s;
-    }
-    .switch input:checked + .slider { background: var(--accent); border-color: var(--accent); }
-    .switch input:checked + .slider::before { transform: translateX(14px); background: #000000; }
-
-    /* ALAPALKKI */
-    #bottombar {
-      position: fixed;
-      bottom: var(--gap);
-      left: var(--gap);
-      right: var(--gap);
-      height: var(--bottom-h);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      gap: 12px;
-      z-index: 200;
-    }
-
-    #status-mode {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      padding: 3px 9px;
-      background: var(--accent-mid);
-      border: 1px solid --border;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
-
-    #status-desc {
-      font-size: 15px;
-      color: var(--text-dim);
-    }
-
-    /* SEINÄN MITTAUS */
-    #mittausLabel {
-      position: fixed;
-      background: var(--surface-2);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 500;
-      padding: 4px 10px;
-      border-radius: 4px;
-      pointer-events: none;
-      display: none;
-    }
-
-    /* POHJAKUVAN KONTROLLIT */
-    #pohjakuvaKontrollit {
-      position: fixed;
-      left: calc(var(--left-w) + var(--gap) * 2);
-      top:  calc(var(--top-h) + var(--gap) * 2);
-      z-index: 150;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-      display: none;
-      width: 210px;
-      font-family: var(--font);
-      font-size: 12px;
-      color: var(--text-dim);
-      box-shadow: var(--shadow);
-    }
-
-    .pk-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .pk-header strong {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--text-dim);
-    }
-
-    #btnSuljePohjakuva {
-      background: none; border: none;
-      cursor: pointer; color: var(--text);
-      font-size: 15px; line-height: 1; padding: 0;
-      transition: color 0.15s;
-    }
-    #btnSuljePohjakuva:hover { color: 	#E5E4E2; }
-
-    #pohjakuvaKontrollit label {
-      display: block;
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-    #pohjakuvaKontrollit input[type=range] {
-      width: 100%;
-      margin-top: 4px;
-      accent-color: var(--accent);
-    }
-    #pohjakuvaKontrollit input[type=number] {
-      width: 100%;
-      margin-top: 4px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text-dim);
-      padding: 5px 8px;
-      font-family: var(--font);
-      font-size: 12px;
-      outline: none;
-    }
-    #pohjakuvaKontrollit input[type=number]:focus { border-color: var(--accent); }
-
-    .pk-btn {
-      width: 100%; margin-top: 6px;
-      padding: 6px 0;
-      font-family: var(--font); font-size: 12px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      border-radius: 4px; cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-    }
-    .pk-btn:hover { background: var(--surface-3); color: var(--text); }
-
-    #kalibrointiInfo {
-      display: none; margin-top: 8px;
-      font-size: 11px; color: var(--danger); font-weight: 600;
-    }
-    #kalibrointiVahvistus { display: none; margin-top: 8px; }
-    #kalibrointiVahvistus input[type=number] {
-      width: 100%; margin: 4px 0 8px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 4px; color: var(--text);
-      padding: 5px 8px; font-family: var(--font); font-size: 12px;
-      outline: none;
-    }
-    .pk-btn-row { display: flex; gap: 6px; }
-    .pk-btn-row .pk-btn { flex: 1; margin-top: 0; }
-
-    /* PRIMITIIVIEN KONTROLLIT */
-    #primitiiviModal {
-      display: none;
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 26px 24px 22px;
-      z-index: 1000;
-      min-width: 290px;
-      box-shadow: var(--shadow);
-    }
-
-    #primitiiviModal h3 {
-      font-family: var(--font);
-      font-size: 11px;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 20px;
-    }
-
-    .modal-field { margin-bottom: 14px; }
-    .modal-field label {
-      display: block;
-      font-family: var(--font);
-      font-size: 12px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 5px;
-    }
-    .modal-field input {
-      width: 100%;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text-dim);
-      padding: 8px 10px;
-      font-family: var(--font);
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .modal-field input:focus { border-color: var(--accent); }
-
-    .modal-actions { display: flex; gap: 8px; margin-top: 22px; }
-    .modal-actions .btn { flex: 1; justify-content: center; }
-  </style>
+  <link rel="stylesheet" href="style.css">
+  
 </head>
 <body>
 
@@ -529,6 +69,10 @@
 
       <button id="btnSylinteri" class="panel-btn">
         <span class="tool-icon">◯</span> Sylinteri
+      </button>
+
+      <button id="btnPortaat" class="panel-btn">
+        <span class="tool-icon">≣</span> Portaat
       </button>
 
       <!-- Pohjakuva: -->
@@ -619,6 +163,27 @@
       </div>
     </div>
 
+    <div id="portaatKentat" style="display:none">
+      <div class="modal-field">
+        <label>Leveys (m)</label>
+        <input id="portaidenLeveys" type="number" value="2" step="0.5">
+      </div>
+      <div class="modal-field">
+        <label>Syvyys (m)</label>
+        <input id="portaidenSyvyys" type="number" value="3" step="0.5">
+      </div>
+      <div class="modal-field">
+        <label>Korkeus (m)</label>
+        <input id="portaidenKorkeus" type="number" value="1.5" step="0.1">
+      </div>
+      <div class="modal-field">
+        <label>Askelmien määrä</label>
+        <input id="portaidenAskelmat" type="number" value="6" step="1" min="2">
+      </div>
+    </div>
+
+    
+
     <div class="modal-actions">
       <button id="modalOK" class="btn btn-accent">Lisää</button>
       <button id="modalPeruuta" class="btn">Peruuta</button>
@@ -653,7 +218,7 @@
     const modeInfo = {
       katselutila:  { label: 'Katselu',  desc: 'Selaa ja tarkastele pohjapiirustusta vapaasti.' },
       siirtelytila: { label: 'Siirtely', desc: 'Raahaa objekteja. Käännä seinää hiiren oikealla. Poista valittu objekti "Delete" -napilla' },
-      piirtotila:   { label: 'Piirto',   desc: 'Pidä hiiri pohjassa ja vedä piirtääksesi seinä. Kamera lukittu 2D-näkymään.' },
+      piirtotila:   { label: 'Piirto',   desc: 'Pidä hiiri pohjassa ja vedä piirtääksesi seinä. Hiiren oikealla voit tarttua seinän päädystä ja muokata seinää. Kamera lukittu 2D-näkymään.' },
       ikkunatila:   { label: 'Ikkuna',   desc: 'Vie hiiri seinän päälle ja klikkaa lisätäksesi ikkuna.' },
       ovitila:      { label: 'Ovi',      desc: 'Vie hiiri seinän päälle ja klikkaa lisätäksesi ovi. Oven kätisyys kääntyy hiiren oikealla.' },
     };
