@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { scene, grid, grid2, drawingPlane, renderer } from './sceneSetup.js';
+import { scene, grid, drawingPlane, renderer } from './sceneSetup.js';
 import { groupDragObjects, dragObjects, undoHistory, hoverBox, hoverBoxSeina, hoverBoxPaaty } from './wallManager.js';
 import { paivitaRaahaus } from './main.js';
 
@@ -17,7 +17,6 @@ export function setupDeleteEvents(cameraGetter) {
     function isProtectedObject(obj) {
         return (
             obj === grid ||
-            obj === grid2 ||
             obj === drawingPlane ||
             obj === hoverBox ||
             obj === hoverBoxSeina

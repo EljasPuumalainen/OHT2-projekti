@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { DragControls } from 'three/addons/controls/DragControls.js';
 
-import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid } from './sceneSetup.js';
 import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
 import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat} from './objectManager.js';
@@ -408,8 +408,8 @@ export function paivitaRaahaus() {
             event.object.rotation.x = 0;
             event.object.rotation.z = 0;
             
-            event.object.position.x = Math.round(event.object.position.x * 2) / 2;
-            event.object.position.z = Math.round(event.object.position.z * 2) / 2;
+            event.object.position.x = Math.round(event.object.position.x * 8) / 8;
+            event.object.position.z = Math.round(event.object.position.z * 8) / 8;
         });
 
         ctrl.addEventListener("dragend", function(event) {
