@@ -56,7 +56,6 @@ export function lataaPohjakuva(file) {
     pohjakuvaRyhma.add(mesh);
 
     scene.add(pohjakuvaRyhma);
-    groupDragObjects.push(pohjakuvaRyhma);
     lukittu = false;
 
     // Resetoi koon asettamisen

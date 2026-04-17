@@ -65,18 +65,48 @@ window.addEventListener("mousedown", (event) => {
         }, 0);
 
         const paikallinenPiste = topRyhma.worldToLocal(seinaIntersects[0].point.clone());
-        if (Math.abs(paikallinenPiste.z - pituus) >= 0.4) return;
+
+        const etuPaaty = Math.abs(paikallinenPiste.z - pituus) < 0.4;
+        const takaPaaty = Math.abs(paikallinenPiste.z - 0) < 0.4;
+
+        if (!etuPaaty && !takaPaaty) return; // Jos ei kumpikaan pääty, lopeta
+
+        if (takaPaaty) {
+            // Jos tartutaan ALKUUN (Z ≈ 0):
+            // 1. Lasketaan loppupisteen maailmankoordinaatit
+            const loppuPosMaailmassa = topRyhma.localToWorld(new THREE.Vector3(0, 0, pituus));
+            
+            // 2. Käännetään ryhmä 180 astetta
+            topRyhma.rotation.y += Math.PI;
+            
+            // 3. Siirretään ryhmä loppupisteeseen (josta tulee uusi startPoint)
+            topRyhma.position.copy(loppuPosMaailmassa);
+            
+            // 4. Päivitetään startPoint
+            startPoint.set(loppuPosMaailmassa.x, 0, loppuPosMaailmassa.z);
+
+            // 5. Käännetään ikkunat/ovet peilikuvaksi, jotta ne pysyvät paikallaan
+            topRyhma.children.forEach(l => {
+                if (l.userData?.tyyppi !== "seina") {
+                    const objektiPituus = (l.userData.tyyppi === "ikkuna" || l.userData.tyyppi === "ovi") ? 1.0 : 0;
+                    l.position.z = pituus - l.position.z - objektiPituus;
+                }
+            });
+        } else {
+            // Jos tartutaan LOPPUUN (Z ≈ pituus):
+            const maailmaPos = new THREE.Vector3();
+            topRyhma.getWorldPosition(maailmaPos);
+            startPoint.set(maailmaPos.x, 0, maailmaPos.z);
+        }
+
+        // --- MUUTETTU OSIO PÄÄTTYY ---
 
         const index = groupDragObjects.indexOf(topRyhma);
         if (index !== -1) groupDragObjects.splice(index, 1);
 
         currentWallGroup = topRyhma;
-        const maailmaPos = new THREE.Vector3();
-        topRyhma.getWorldPosition(maailmaPos);
-        startPoint.set(maailmaPos.x, 0, maailmaPos.z);
         controls2D.enabled = false;
         hoverBoxPaaty.visible = false;
-
     } else if (event.button === 0) {
         // Vasen nappi — normaali piirto
         const intersects = raycaster.intersectObject(drawingPlane);
@@ -187,7 +217,7 @@ const hoverBoxSeinaMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transpar
 export const hoverBoxSeina = new THREE.Mesh(hoverBoxSeinaGeo, hoverBoxSeinaMat);
 hoverBoxSeina.visible = false;
 
-const hoverBoxPaatyGeo = new THREE.BoxGeometry(0.26, 2.55, 0.35);
+const hoverBoxPaatyGeo = new THREE.BoxGeometry(0.26, 2.55, 0.5);
 const hoverBoxPaatyMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.5 });
 export const hoverBoxPaaty = new THREE.Mesh(hoverBoxPaatyGeo, hoverBoxPaatyMat);
 hoverBoxPaaty.visible = false;
@@ -302,7 +332,11 @@ window.addEventListener("mousemove", (event) => {
                 const paikallinenPiste = topRyhma.worldToLocal(paatyIntersects[0].point.clone());
                 if (Math.abs(paikallinenPiste.z - pituus) < 0.4) {
                     hoverBoxPaaty.visible = true;
-                    hoverBoxPaaty.position.copy(topRyhma.localToWorld(new THREE.Vector3(0, 1.25, pituus)));
+                    hoverBoxPaaty.position.copy(topRyhma.localToWorld(new THREE.Vector3(0, 1.25, pituus + 0.25)));
+                    hoverBoxPaaty.rotation.copy(topRyhma.rotation);
+                } else if (Math.abs(paikallinenPiste.z - 0) < 0.4) {
+                    hoverBoxPaaty.visible = true;
+                    hoverBoxPaaty.position.copy(topRyhma.localToWorld(new THREE.Vector3(0, 1.25, 0 - 0.25)));
                     hoverBoxPaaty.rotation.copy(topRyhma.rotation);
                 }
             }
