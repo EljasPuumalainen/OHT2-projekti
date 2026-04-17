@@ -51,17 +51,12 @@ export const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 10, 7.5);
 scene.add(directionalLight);
 
-//TODO: Säädettävä grid?
-//Kaksi erillistä gridiä, ensimmäinen koko alue tummemmat viivat ja toinen grid jakaa 4x4 alueisiin vaaleammilla viivoilla
-//100 x 100 m grid 1 ruutu = 1 metri
-export const grid = new THREE.GridHelper(100, 100, 0x666666, 0x666666);
+//100 x 100 m grid 1 ruutu = 0.5 metri
+export const grid = new THREE.GridHelper(100, 200, 0x666666, 0x666666);
 scene.add( grid );
-export const grid2 = new THREE.GridHelper(100, 20, 0xbbbbbb, 0xbbbbbb);
-scene.add( grid2 );
 
 // rendataan päägridit eka, sitten vasta kuva
 grid.renderOrder = 0;
-grid2.renderOrder = 0;
 
 export const buttonCamera = document.getElementById("buttonCamera");
 

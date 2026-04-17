@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid } from './sceneSetup.js';
 import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
 
 
@@ -81,8 +81,8 @@ window.addEventListener("mousedown", (event) => {
         // Vasen nappi — normaali piirto
         const intersects = raycaster.intersectObject(drawingPlane);
         if (intersects.length > 0) {
-            startPoint.x = Math.round(intersects[0].point.x * 2) / 2;
-            startPoint.z = Math.round(intersects[0].point.z * 2) / 2;
+            startPoint.x = Math.round(intersects[0].point.x * 8) / 8;
+            startPoint.z = Math.round(intersects[0].point.z * 8) / 8;
             startPoint.y = 0;
 
             currentWallGroup = new THREE.Group();
@@ -142,7 +142,7 @@ window.addEventListener("mousemove", (event) => {
             const zKeski = i * 0.25 + 0.125;
             if (esteet.some(e => zKeski >= e.alku && zKeski < e.loppu)) continue;
 
-            const geometry = new THREE.BoxGeometry(0.3, 2.5, 0.25);
+            const geometry = new THREE.BoxGeometry(0.25, 2.5, 0.25);
             const pala = new THREE.Mesh(geometry, material);
             pala.position.set(0, 1.25, zKeski);
             pala.userData.tyyppi = "seina";
@@ -175,19 +175,19 @@ window.addEventListener("mouseup", (event) => {
 });
 
 //Korostus toiminnot
-export const hoverBoxGeo = new THREE.BoxGeometry(0.31, 2.51, 1);
+export const hoverBoxGeo = new THREE.BoxGeometry(0.26, 2.51, 1);
 export const hoverBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBox = new THREE.Mesh(hoverBoxGeo, hoverBoxMat);
 
 scene.add(hoverBox);
 hoverBox.visible = false;
 
-const hoverBoxSeinaGeo = new THREE.BoxGeometry(0.31, 2.51, 1); 
+const hoverBoxSeinaGeo = new THREE.BoxGeometry(0.26, 2.51, 1); 
 const hoverBoxSeinaMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBoxSeina = new THREE.Mesh(hoverBoxSeinaGeo, hoverBoxSeinaMat);
 hoverBoxSeina.visible = false;
 
-const hoverBoxPaatyGeo = new THREE.BoxGeometry(0.35, 2.55, 0.35);
+const hoverBoxPaatyGeo = new THREE.BoxGeometry(0.26, 2.55, 0.35);
 const hoverBoxPaatyMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.5 });
 export const hoverBoxPaaty = new THREE.Mesh(hoverBoxPaatyGeo, hoverBoxPaatyMat);
 hoverBoxPaaty.visible = false;
@@ -351,7 +351,7 @@ window.addEventListener("mousedown", (event) => {
 
             const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
             for (let i = 0; i < 2; i++) {
-                const geo = new THREE.BoxGeometry(0.3, 2.5, 0.5);
+                const geo = new THREE.BoxGeometry(0.25, 2.5, 0.5);
                 const pala = new THREE.Mesh(geo, material);
                 pala.position.set(0, 1.25, keskiZ - 0.25 + i * 0.5);
                 pala.userData.tyyppi = "seina";
@@ -408,7 +408,7 @@ export function lisaaIkkuna(kohdeRyhma = null, zPos = 0.5) {
     const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
     
     const pituus = 1.0;
-    const paksuus = 0.3;
+    const paksuus = 0.25;
     const korkeus = 0.9;
 
     // 1. Geometriat
@@ -456,14 +456,14 @@ export function lisaaOvi(kohdeRyhma, zPos) {
     const material = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, side: THREE.DoubleSide })
     const circle = new THREE.Mesh(geometry, material)
     circle.rotation.x = -Math.PI / 2;
-    circle.position.set(0.15, 0.01, 0.5)
+    circle.position.set(0.1, 0.01, 0.5)
 
-    const ylapalaGeo = new THREE.BoxGeometry(0.3, 0.4, 1.0);
+    const ylapalaGeo = new THREE.BoxGeometry(0.25, 0.4, 1.0);
     const ylapalaMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
     const ylapala = new THREE.Mesh(ylapalaGeo, ylapalaMat);
     ylapala.position.y = 2.3;
 
-    const alapalaGeo = new THREE.BoxGeometry(0.3, 0.01, 1.0);
+    const alapalaGeo = new THREE.BoxGeometry(0.25, 0.01, 1.0);
     const alapalaMat = new THREE.MeshStandardMaterial({ color: 0xa0a0a0 });
     const alapala = new THREE.Mesh(alapalaGeo, alapalaMat);
     alapala.position.set(0, 0.005, 0)
@@ -590,7 +590,7 @@ export function setupTurnEvents(getCamera) {
             if (intersects.length > 0) {
                 let hitObject = intersects[0].object;
 
-                if (hitObject === grid || hitObject === grid2 || hitObject === drawingPlane)
+                if (hitObject === grid || hitObject === drawingPlane)
                     return
                 // Jos seinä kuuluu ryhmään, valitaan koko ryhmä käännettäväksi
                 let topObject = hitObject;

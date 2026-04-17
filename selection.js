@@ -27,8 +27,8 @@ export function initSelection(getActiveCamera, getActiveControls, groupDragContr
         clickStartX = e.clientX;
         clickStartY = e.clientY;
 
-        // --- MAALAUS ALKAA (Shift + Vasen hiiri) ---
-        if (e.shiftKey && e.button === 0) {
+        // --- MAALAUS ALKAA (CTRL + Vasen hiiri) ---
+        if (e.ctrlKey && e.button === 0) {
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
