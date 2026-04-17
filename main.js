@@ -5,7 +5,7 @@ import { DragControls } from 'three/addons/controls/DragControls.js';
 import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid } from './sceneSetup.js';
 import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
-import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat} from './objectManager.js';
+import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat, lisaaHissi} from './objectManager.js';
 import { lataaPohjakuva, asetaOpasiteetti, asetaLeveys, asetaKorkeus, toggleLukitus, onkoLukittu, onkoPohjakuva, initImageManager, startKalibrointi, initKalibrointiNapit } from './imageManager.js';
 import { aktivoiMaster, deaktivoiMaster } from './dragAll.js';
 import { setupDeleteEvents } from './deleteObject.js';
@@ -191,6 +191,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const suorakaide = document.getElementById('btnSuorakaide');
     const sylinteri = document.getElementById('btnSylinteri');
     const portaat = document.getElementById('btnPortaat');
+    const hissi = document.getElementById('btnHissi');
     const modalOK = document.getElementById('modalOK');
     const modalPeruuta = document.getElementById('modalPeruuta');
 
@@ -269,6 +270,7 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('suorakaideKentat').style.display = 'block';
         document.getElementById('sylinteriKentat').style.display = 'none';
         document.getElementById('portaatKentat').style.display = 'none';
+        document.getElementById('hissiKentat').style.display = 'none';
         document.getElementById('primitiiviModal').style.display = 'block';
     });
 
@@ -278,6 +280,7 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('suorakaideKentat').style.display = 'none';
         document.getElementById('sylinteriKentat').style.display = 'block';
         document.getElementById('portaatKentat').style.display = 'none';
+        document.getElementById('hissiKentat').style.display = 'none';
         document.getElementById('primitiiviModal').style.display = 'block';
     });
 
@@ -288,6 +291,18 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('suorakaideKentat').style.display = 'none';
         document.getElementById('sylinteriKentat').style.display = 'none';
         document.getElementById('portaatKentat').style.display = 'block';
+        document.getElementById('hissiKentat').style.display = 'none';
+        document.getElementById('primitiiviModal').style.display = 'block';
+    });
+
+    hissi.addEventListener('click', () => {
+        modalTyyppi = 'hissi';
+        document.getElementById('pNimi').parentElement.style.display = 'none';
+        document.getElementById('modalOtsikko').textContent = 'Lisää hissi';
+        document.getElementById('suorakaideKentat').style.display = 'none';
+        document.getElementById('sylinteriKentat').style.display = 'none';
+        document.getElementById('portaatKentat').style.display = 'none';
+        document.getElementById('hissiKentat').style.display = 'block';
         document.getElementById('primitiiviModal').style.display = 'block';
     });
 
@@ -309,6 +324,12 @@ window.addEventListener("DOMContentLoaded", () => {
             const k = parseFloat(document.getElementById('portaidenKorkeus').value);
             const a = parseInt(document.getElementById('portaidenAskelmat').value, 10);
             lisaaPortaat(l, s, k, a, nimi);
+        }
+        else if (modalTyyppi === 'hissi') {
+            const l = parseFloat(document.getElementById('hissiLeveys').value);
+            const s = parseFloat(document.getElementById('hissiSyvyys').value);
+            const k = parseFloat(document.getElementById('hissiKorkeus').value);
+            lisaaHissi(l, s, k, '');
         }
         document.getElementById('primitiiviModal').style.display = 'none';
     });
