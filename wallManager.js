@@ -597,6 +597,7 @@ export function setupTurnOvi(getCamera) {
 export function setupTurnEvents(getCamera) {
     let isRotating = false;
     let selectedObject = null;
+    let currentRotationY = 0;
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -633,7 +634,11 @@ export function setupTurnEvents(getCamera) {
                 }
 
                 if (siirtelyRadio.checked) {
+
+                    if (topObject.userData.tyyppi === 'pohjakuva') return;
+
                     selectedObject = topObject;
+                    currentRotationY = selectedObject.rotation.y;
                     isRotating = true;
                     controls3D.enabled = false;
                     controls2D.enablePan = false;
@@ -648,8 +653,8 @@ export function setupTurnEvents(getCamera) {
             return;
 
         if (isRotating && selectedObject) {
-            selectedObject.rotation.y += event.movementX * 0.005;
-        
+            currentRotationY += event.movementX * 0.005; // <-- päivitetään muuttujaa
+            selectedObject.rotation.y = currentRotationY; // <-- asetetaan suoraan
             selectedObject.rotation.x = 0;
             selectedObject.rotation.z = 0;
         }
@@ -659,7 +664,8 @@ export function setupTurnEvents(getCamera) {
         if (event.button == 2 && isRotating) {
             const step = 5 * (Math.PI / 180);
             if (selectedObject) {
-                selectedObject.rotation.y = Math.round(selectedObject.rotation.y / step) * step;
+                currentRotationY = Math.round(currentRotationY / step) * step; // <-- pyöristetään muuttuja
+                selectedObject.rotation.y = currentRotationY;
             }
 
             isRotating = false;
