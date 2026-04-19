@@ -32,6 +32,14 @@ export function aktivoiMaster(groupDragObjects, getDragControls) {
     if (groupDragControls) {
         groupDragControls.transformGroup = true;
         groupDragControls.objects = [masterGroup];
+
+        ctrl.addEventListener("drag", (event) => {
+            event.object.position.y = 0;
+            event.object.rotation.x = 0;
+            event.object.rotation.z = 0;
+            event.object.position.x = Math.round(event.object.position.x * 8) / 8;
+            event.object.position.z = Math.round(event.object.position.z * 8) / 8;
+        });
     }
 }
 
