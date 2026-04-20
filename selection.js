@@ -2,8 +2,9 @@ import * as THREE from "three"
 
 import { groupDragObjects } from './wallManager.js';
 import { aktivoiAlueRaahaus, puraAlueRaahaus } from './selectedDrag.js';
+import { paivitaRaahaus } from "./main.js";
 
-import { Raycaster, Vector2 } from 'three';
+
 
 let isDragging = false;
 let startX, startY;
@@ -14,7 +15,7 @@ selectionBox.classList.add('selection-box');
 document.body.appendChild(selectionBox);
 
 
-export function initSelection(getActiveCamera, getActiveControls, groupDragControls) {
+export function initSelection(getActiveCamera, getActiveControls, getGroupDragControls) {
     
     window.addEventListener('mousedown', (e) => {
         const tila = document.querySelector('input[name="tila"]:checked')?.value;
@@ -27,8 +28,8 @@ export function initSelection(getActiveCamera, getActiveControls, groupDragContr
         clickStartX = e.clientX;
         clickStartY = e.clientY;
 
-        // --- MAALAUS ALKAA (Shift + Vasen hiiri) ---
-        if (e.shiftKey && e.button === 0) {
+        // --- MAALAUS ALKAA (CTRL + Vasen hiiri) ---
+        if (e.ctrlKey && e.button === 0) {
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -63,13 +64,16 @@ export function initSelection(getActiveCamera, getActiveControls, groupDragContr
             
             // Jos hiiri liikkui alle 5 pikseliä, kyseessä oli KLIKKAUS (ei raahaus)
             if (dist < 5) {
-                console.log("Klikkaus tyhjään -> Puretaan valinta");
-                puraAlueRaahaus(groupDragObjects, groupDragControls);
-                
+                // Älä tee mitään jos master-tila on päällä
                 const masterToggle = document.getElementById("liikutaKaikkia");
-                if (masterToggle) masterToggle.checked = false;
-                return; // Lopetetaan tähän
+                if (masterToggle && masterToggle.checked) return;
+                
+                console.log("Klikkaus tyhjään -> Puretaan valinta");
+                puraAlueRaahaus(groupDragObjects, getGroupDragControls());
+                paivitaRaahaus();
+                return;
             }
+
         }
 
         if (!isDragging) return;
@@ -118,7 +122,8 @@ export function initSelection(getActiveCamera, getActiveControls, groupDragContr
 
         if (valitut.length > 0) {
             console.log("Valittu " + valitut.length + " seinää.");
-            aktivoiAlueRaahaus(valitut, groupDragControls);
+            aktivoiAlueRaahaus(valitut, getGroupDragControls());
+            
         }
     });
 }

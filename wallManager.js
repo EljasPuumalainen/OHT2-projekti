@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid } from './sceneSetup.js';
 import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
 
 
@@ -65,24 +65,54 @@ window.addEventListener("mousedown", (event) => {
         }, 0);
 
         const paikallinenPiste = topRyhma.worldToLocal(seinaIntersects[0].point.clone());
-        if (Math.abs(paikallinenPiste.z - pituus) >= 0.4) return;
+
+        const etuPaaty = Math.abs(paikallinenPiste.z - pituus) < 0.4;
+        const takaPaaty = Math.abs(paikallinenPiste.z - 0) < 0.4;
+
+        if (!etuPaaty && !takaPaaty) return; // Jos ei kumpikaan pääty, lopeta
+
+        if (takaPaaty) {
+            // Jos tartutaan ALKUUN (Z ≈ 0):
+            // 1. Lasketaan loppupisteen maailmankoordinaatit
+            const loppuPosMaailmassa = topRyhma.localToWorld(new THREE.Vector3(0, 0, pituus));
+            
+            // 2. Käännetään ryhmä 180 astetta
+            topRyhma.rotation.y += Math.PI;
+            
+            // 3. Siirretään ryhmä loppupisteeseen (josta tulee uusi startPoint)
+            topRyhma.position.copy(loppuPosMaailmassa);
+            
+            // 4. Päivitetään startPoint
+            startPoint.set(loppuPosMaailmassa.x, 0, loppuPosMaailmassa.z);
+
+            // 5. Käännetään ikkunat/ovet peilikuvaksi, jotta ne pysyvät paikallaan
+            topRyhma.children.forEach(l => {
+                if (l.userData?.tyyppi !== "seina") {
+                    const objektiPituus = (l.userData.tyyppi === "ikkuna" || l.userData.tyyppi === "ovi") ? 1.0 : 0;
+                    l.position.z = pituus - l.position.z - objektiPituus;
+                }
+            });
+        } else {
+            // Jos tartutaan LOPPUUN (Z ≈ pituus):
+            const maailmaPos = new THREE.Vector3();
+            topRyhma.getWorldPosition(maailmaPos);
+            startPoint.set(maailmaPos.x, 0, maailmaPos.z);
+        }
+
+        // --- MUUTETTU OSIO PÄÄTTYY ---
 
         const index = groupDragObjects.indexOf(topRyhma);
         if (index !== -1) groupDragObjects.splice(index, 1);
 
         currentWallGroup = topRyhma;
-        const maailmaPos = new THREE.Vector3();
-        topRyhma.getWorldPosition(maailmaPos);
-        startPoint.set(maailmaPos.x, 0, maailmaPos.z);
         controls2D.enabled = false;
         hoverBoxPaaty.visible = false;
-
     } else if (event.button === 0) {
         // Vasen nappi — normaali piirto
         const intersects = raycaster.intersectObject(drawingPlane);
         if (intersects.length > 0) {
-            startPoint.x = Math.round(intersects[0].point.x * 2) / 2;
-            startPoint.z = Math.round(intersects[0].point.z * 2) / 2;
+            startPoint.x = Math.round(intersects[0].point.x * 8) / 8;
+            startPoint.z = Math.round(intersects[0].point.z * 8) / 8;
             startPoint.y = 0;
 
             currentWallGroup = new THREE.Group();
@@ -142,7 +172,7 @@ window.addEventListener("mousemove", (event) => {
             const zKeski = i * 0.25 + 0.125;
             if (esteet.some(e => zKeski >= e.alku && zKeski < e.loppu)) continue;
 
-            const geometry = new THREE.BoxGeometry(0.3, 2.5, 0.25);
+            const geometry = new THREE.BoxGeometry(0.25, 2.5, 0.25);
             const pala = new THREE.Mesh(geometry, material);
             pala.position.set(0, 1.25, zKeski);
             pala.userData.tyyppi = "seina";
@@ -175,19 +205,19 @@ window.addEventListener("mouseup", (event) => {
 });
 
 //Korostus toiminnot
-export const hoverBoxGeo = new THREE.BoxGeometry(0.31, 2.51, 1);
+export const hoverBoxGeo = new THREE.BoxGeometry(0.26, 2.51, 1);
 export const hoverBoxMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBox = new THREE.Mesh(hoverBoxGeo, hoverBoxMat);
 
 scene.add(hoverBox);
 hoverBox.visible = false;
 
-const hoverBoxSeinaGeo = new THREE.BoxGeometry(0.31, 2.51, 1); 
+const hoverBoxSeinaGeo = new THREE.BoxGeometry(0.26, 2.51, 1); 
 const hoverBoxSeinaMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3 });
 export const hoverBoxSeina = new THREE.Mesh(hoverBoxSeinaGeo, hoverBoxSeinaMat);
 hoverBoxSeina.visible = false;
 
-const hoverBoxPaatyGeo = new THREE.BoxGeometry(0.35, 2.55, 0.35);
+const hoverBoxPaatyGeo = new THREE.BoxGeometry(0.26, 2.55, 0.5);
 const hoverBoxPaatyMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.5 });
 export const hoverBoxPaaty = new THREE.Mesh(hoverBoxPaatyGeo, hoverBoxPaatyMat);
 hoverBoxPaaty.visible = false;
@@ -302,7 +332,11 @@ window.addEventListener("mousemove", (event) => {
                 const paikallinenPiste = topRyhma.worldToLocal(paatyIntersects[0].point.clone());
                 if (Math.abs(paikallinenPiste.z - pituus) < 0.4) {
                     hoverBoxPaaty.visible = true;
-                    hoverBoxPaaty.position.copy(topRyhma.localToWorld(new THREE.Vector3(0, 1.25, pituus)));
+                    hoverBoxPaaty.position.copy(topRyhma.localToWorld(new THREE.Vector3(0, 1.25, pituus + 0.25)));
+                    hoverBoxPaaty.rotation.copy(topRyhma.rotation);
+                } else if (Math.abs(paikallinenPiste.z - 0) < 0.4) {
+                    hoverBoxPaaty.visible = true;
+                    hoverBoxPaaty.position.copy(topRyhma.localToWorld(new THREE.Vector3(0, 1.25, 0 - 0.25)));
                     hoverBoxPaaty.rotation.copy(topRyhma.rotation);
                 }
             }
@@ -351,7 +385,7 @@ window.addEventListener("mousedown", (event) => {
 
             const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
             for (let i = 0; i < 2; i++) {
-                const geo = new THREE.BoxGeometry(0.3, 2.5, 0.5);
+                const geo = new THREE.BoxGeometry(0.25, 2.5, 0.5);
                 const pala = new THREE.Mesh(geo, material);
                 pala.position.set(0, 1.25, keskiZ - 0.25 + i * 0.5);
                 pala.userData.tyyppi = "seina";
@@ -408,7 +442,7 @@ export function lisaaIkkuna(kohdeRyhma = null, zPos = 0.5) {
     const material = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
     
     const pituus = 1.0;
-    const paksuus = 0.3;
+    const paksuus = 0.25;
     const korkeus = 0.9;
 
     // 1. Geometriat
@@ -456,14 +490,14 @@ export function lisaaOvi(kohdeRyhma, zPos) {
     const material = new THREE.MeshStandardMaterial({ color: 0xa0a0a0, side: THREE.DoubleSide })
     const circle = new THREE.Mesh(geometry, material)
     circle.rotation.x = -Math.PI / 2;
-    circle.position.set(0.15, 0.01, 0.5)
+    circle.position.set(0.1, 0.01, 0.5)
 
-    const ylapalaGeo = new THREE.BoxGeometry(0.3, 0.4, 1.0);
+    const ylapalaGeo = new THREE.BoxGeometry(0.25, 0.4, 1.0);
     const ylapalaMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0 });
     const ylapala = new THREE.Mesh(ylapalaGeo, ylapalaMat);
     ylapala.position.y = 2.3;
 
-    const alapalaGeo = new THREE.BoxGeometry(0.3, 0.01, 1.0);
+    const alapalaGeo = new THREE.BoxGeometry(0.25, 0.01, 1.0);
     const alapalaMat = new THREE.MeshStandardMaterial({ color: 0xa0a0a0 });
     const alapala = new THREE.Mesh(alapalaGeo, alapalaMat);
     alapala.position.set(0, 0.005, 0)
@@ -563,6 +597,7 @@ export function setupTurnOvi(getCamera) {
 export function setupTurnEvents(getCamera) {
     let isRotating = false;
     let selectedObject = null;
+    let currentRotationY = 0;
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
@@ -590,7 +625,7 @@ export function setupTurnEvents(getCamera) {
             if (intersects.length > 0) {
                 let hitObject = intersects[0].object;
 
-                if (hitObject === grid || hitObject === grid2 || hitObject === drawingPlane)
+                if (hitObject === grid || hitObject === drawingPlane)
                     return
                 // Jos seinä kuuluu ryhmään, valitaan koko ryhmä käännettäväksi
                 let topObject = hitObject;
@@ -599,7 +634,11 @@ export function setupTurnEvents(getCamera) {
                 }
 
                 if (siirtelyRadio.checked) {
+
+                    if (topObject.userData.tyyppi === 'pohjakuva') return;
+
                     selectedObject = topObject;
+                    currentRotationY = selectedObject.rotation.y;
                     isRotating = true;
                     controls3D.enabled = false;
                     controls2D.enablePan = false;
@@ -614,8 +653,8 @@ export function setupTurnEvents(getCamera) {
             return;
 
         if (isRotating && selectedObject) {
-            selectedObject.rotation.y += event.movementX * 0.005;
-        
+            currentRotationY += event.movementX * 0.005; // <-- päivitetään muuttujaa
+            selectedObject.rotation.y = currentRotationY; // <-- asetetaan suoraan
             selectedObject.rotation.x = 0;
             selectedObject.rotation.z = 0;
         }
@@ -625,7 +664,8 @@ export function setupTurnEvents(getCamera) {
         if (event.button == 2 && isRotating) {
             const step = 5 * (Math.PI / 180);
             if (selectedObject) {
-                selectedObject.rotation.y = Math.round(selectedObject.rotation.y / step) * step;
+                currentRotationY = Math.round(currentRotationY / step) * step; // <-- pyöristetään muuttuja
+                selectedObject.rotation.y = currentRotationY;
             }
 
             isRotating = false;
@@ -635,152 +675,3 @@ export function setupTurnEvents(getCamera) {
         }
     })
 }
-
-export function setupDeleteEvents() {
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    let selectedObject = null;
-
-    function isProtectedObject(obj) {
-        return (
-            obj === grid ||
-            obj === grid2 ||
-            obj === drawingPlane ||
-            obj === hoverBox ||
-            obj === hoverBoxSeina
-        );
-    }
-
-    function getTopLevelObject(hitObject) {
-        let topObject = hitObject;
-
-        while (topObject.parent && topObject.parent !== scene) {
-            topObject = topObject.parent;
-        }
-
-        return topObject;
-    }
-
-    console.log("[Poisto] setupDeleteEvents alustettu");
-
-    window.addEventListener("mousedown", function(event) {
-        console.log("[Poisto] mousedown havaittu", {
-            button: event.button
-        });
-
-        const siirtelyRadio = document.getElementById("siirtelytila");
-        console.log("[Poisto] siirtelyRadio löytyi:", !!siirtelyRadio);
-        console.log("[Poisto] siirtelytila checked:", siirtelyRadio?.checked);
-
-        if (!siirtelyRadio || !siirtelyRadio.checked) {
-            console.log("[Poisto] Ei siirtelytilassa");
-            return;
-        }
-
-        if (event.button !== 0) {
-            console.log("[Poisto] Ei vasen klikkaus");
-            return;
-        }
-
-        const rect = renderer.domElement.getBoundingClientRect();
-
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        const activeCam = getActiveCamera ? getActiveCamera() : null;
-        console.log("[Poisto] aktiivinen kamera:", activeCam);
-
-        if (!activeCam) {
-            console.log("[Poisto] Aktiivista kameraa ei löytynyt");
-            return;
-        }
-
-        raycaster.setFromCamera(mouse, activeCam);
-
-        const intersects = raycaster.intersectObjects(scene.children, true);
-        console.log("[Poisto] osumia:", intersects.length);
-
-        selectedObject = null;
-
-        for (const hit of intersects) {
-            const hitObject = hit.object;
-            console.log("[Poisto] osuma objektiin:", hitObject);
-
-            if (isProtectedObject(hitObject)) {
-                console.log("[Poisto] Suojattu objekti, ohitetaan");
-                continue;
-            }
-
-            const topObject = getTopLevelObject(hitObject);
-            console.log("[Poisto] topObject:", topObject);
-
-            if (isProtectedObject(topObject)) {
-                console.log("[Poisto] TopObject suojattu, ohitetaan");
-                continue;
-            }
-
-            selectedObject = topObject;
-            console.log("[Poisto] Valittu objekti:", selectedObject);
-            break;
-        }
-
-        if (!selectedObject) {
-            console.log("[Poisto] Yhtään valittavaa objektia ei löytynyt");
-        }
-    });
-
-    window.addEventListener("keydown", function(event) {
-        const siirtelyRadio = document.getElementById("siirtelytila");
-
-        if (!siirtelyRadio || !siirtelyRadio.checked) return;
-
-        //console.log("[Poisto] keydown:", event.key);
-
-        if (!selectedObject) {
-            //console.log("[Poisto] Ei valittua objektia");
-            return;
-        }
-
-        const tag = document.activeElement?.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return;
-
-        if (event.key === "Delete" || event.key === "Backspace") {
-            event.preventDefault();
-
-            const parent = selectedObject.parent;
-            if (!parent) return;
-
-            const indexInGroupDrag = groupDragObjects.indexOf(selectedObject);
-            const indexInDrag = dragObjects.indexOf(selectedObject);
-
-            undoHistory.push({
-                type: "poisto",
-                object: selectedObject,
-                parent: parent,
-                indexInGroupDrag: indexInGroupDrag,
-                indexInDrag: indexInDrag
-            });
-
-            parent.remove(selectedObject);
-
-            if (selectedObject.userData.tyyppi === 'pohjakuva') {
-                window.dispatchEvent(new CustomEvent('pohjakuvaDeleted'));
-            }
-
-            if (indexInGroupDrag !== -1) {
-                groupDragObjects.splice(indexInGroupDrag, 1);
-            }
-
-            if (indexInDrag !== -1) {
-                dragObjects.splice(indexInDrag, 1);
-            }
-
-            paivitaRaahaus();
-            console.log("[Poisto] Objekti poistettu");
-
-            selectedObject = null;
-        }
-    });
-}
-

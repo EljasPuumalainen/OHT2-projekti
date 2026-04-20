@@ -2,12 +2,14 @@ import * as THREE from 'three';
 
 import { DragControls } from 'three/addons/controls/DragControls.js';
 
-import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, grid2 } from './sceneSetup.js';
-import { setupTurnEvents, setupDeleteEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid } from './sceneSetup.js';
+import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
-import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat} from './objectManager.js';
+import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat, lisaaHissi} from './objectManager.js';
 import { lataaPohjakuva, asetaOpasiteetti, asetaLeveys, asetaKorkeus, toggleLukitus, onkoLukittu, onkoPohjakuva, initImageManager, startKalibrointi, initKalibrointiNapit } from './imageManager.js';
-import { aktivoiMaster, deaktivoiMaster } from './dragAll.js';
+import { aktivoiMaster, deaktivoiMaster, masterGroup} from './dragAll.js';
+
+import { setupDeleteEvents } from './deleteObject.js';
 
 import { initSelection } from './selection.js';
 
@@ -48,8 +50,7 @@ dragControls.transformGroup = true; // Lisää tämä rivi kaikkialle missä luo
 initSelection(
     () => activeCamera, 
     () => (activeCamera === camera3d ? controls3D : controls2D),
-    groupDragControls
-    
+    () => groupDragControls  // ← getteri
 );
 
 paivitaRaahaus()
@@ -64,7 +65,7 @@ setupTurnEvents(() => activeCamera)
 
 setupTurnOvi(() => activeCamera)
 
-setupDeleteEvents()
+setupDeleteEvents(() => activeCamera)
 
 function disableBtn() {
     document.getElementById("buttonCamera").disabled = true;
@@ -85,14 +86,14 @@ function paivitaTila() {
     
     if (liikutaKaikkiaCheckbox && liikutaKaikkiaCheckbox.checked) {
         // Aktivoi master-tila
-        aktivoiMaster(groupDragObjects, groupDragControls);
+        aktivoiMaster(groupDragObjects, () => groupDragControls);
         
         // Pakotetaan käyttöliittymä oikeaan tilaan
         setDrawing(false);
         enableBtn();
     } else {
         // Poista master-tila
-        deaktivoiMaster(groupDragObjects, groupDragControls);
+        deaktivoiMaster(groupDragObjects, () => groupDragControls);
         
         // Nyt vasta kutsutaan paivitaRaahaus, kun masterGroup on purettu
         paivitaRaahaus();
@@ -183,6 +184,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const piirto = document.getElementById("piirtotila");
     const ikkuna = document.getElementById("ikkunatila");
     const ovi = document.getElementById("ovitila");
+    const liikutaKaikkiaCheckbox = document.getElementById("liikutaKaikkia");
 
     const undoWrap = document.getElementById("undo-wrap");
     const showUndoModes = ['piirtotila', 'ikkunatila', 'ovitila'];
@@ -190,6 +192,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const suorakaide = document.getElementById('btnSuorakaide');
     const sylinteri = document.getElementById('btnSylinteri');
     const portaat = document.getElementById('btnPortaat');
+    const hissi = document.getElementById('btnHissi');
     const modalOK = document.getElementById('modalOK');
     const modalPeruuta = document.getElementById('modalPeruuta');
 
@@ -200,13 +203,28 @@ window.addEventListener("DOMContentLoaded", () => {
     const lukitse = document.getElementById('btnLukitsePohjakuva');
     const btnKalibroi = document.getElementById('btnKalibroi');
 
+
+
+
+    liikutaKaikkiaCheckbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            // Vaihda siirtelytilaan ensin
+            if (siirtely) {
+                siirtely.checked = true;
+                paivitaTila(); // ← pakota tilan vaihto ensin
+            }
+            paivitaRaahaus();
+            aktivoiMaster(groupDragObjects, () => groupDragControls);
+        } else {
+            deaktivoiMaster(groupDragObjects, () => groupDragControls);
+            paivitaRaahaus();
+        }
+    });
     //Undo button näkyvyys: piirto, ikkuna ja ovi tiloissa
     document.querySelectorAll('input[name="tila"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             undoWrap.style.display = showUndoModes.includes(e.target.value) ? 'block' : 'none';
         });
-
-    
     });
 
     undoWrap.style.display = 'none';
@@ -268,6 +286,7 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('suorakaideKentat').style.display = 'block';
         document.getElementById('sylinteriKentat').style.display = 'none';
         document.getElementById('portaatKentat').style.display = 'none';
+        document.getElementById('hissiKentat').style.display = 'none';
         document.getElementById('primitiiviModal').style.display = 'block';
     });
 
@@ -277,6 +296,7 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('suorakaideKentat').style.display = 'none';
         document.getElementById('sylinteriKentat').style.display = 'block';
         document.getElementById('portaatKentat').style.display = 'none';
+        document.getElementById('hissiKentat').style.display = 'none';
         document.getElementById('primitiiviModal').style.display = 'block';
     });
 
@@ -287,6 +307,18 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('suorakaideKentat').style.display = 'none';
         document.getElementById('sylinteriKentat').style.display = 'none';
         document.getElementById('portaatKentat').style.display = 'block';
+        document.getElementById('hissiKentat').style.display = 'none';
+        document.getElementById('primitiiviModal').style.display = 'block';
+    });
+
+    hissi.addEventListener('click', () => {
+        modalTyyppi = 'hissi';
+        document.getElementById('pNimi').parentElement.style.display = 'none';
+        document.getElementById('modalOtsikko').textContent = 'Lisää hissi';
+        document.getElementById('suorakaideKentat').style.display = 'none';
+        document.getElementById('sylinteriKentat').style.display = 'none';
+        document.getElementById('portaatKentat').style.display = 'none';
+        document.getElementById('hissiKentat').style.display = 'block';
         document.getElementById('primitiiviModal').style.display = 'block';
     });
 
@@ -308,6 +340,12 @@ window.addEventListener("DOMContentLoaded", () => {
             const k = parseFloat(document.getElementById('portaidenKorkeus').value);
             const a = parseInt(document.getElementById('portaidenAskelmat').value, 10);
             lisaaPortaat(l, s, k, a, nimi);
+        }
+        else if (modalTyyppi === 'hissi') {
+            const l = parseFloat(document.getElementById('hissiLeveys').value);
+            const s = parseFloat(document.getElementById('hissiSyvyys').value);
+            const k = parseFloat(document.getElementById('hissiKorkeus').value);
+            lisaaHissi(l, s, k, '');
         }
         document.getElementById('primitiiviModal').style.display = 'none';
     });
@@ -369,49 +407,51 @@ window.addEventListener("DOMContentLoaded", () => {
 })
 
 export function paivitaRaahaus() {
-
     const onkoAlueValittu = groupDragControls && 
-                           groupDragControls.objects.length === 1 && 
-                           (groupDragControls.objects[0].name === "ALUEVALINTA_RYHMA" || 
-                            groupDragControls.objects[0].name === "MASTER_SYSTEM");
+                        groupDragControls.objects.length === 1 && 
+                        (
+                            (groupDragControls.objects[0].name === "ALUEVALINTA_RYHMA" &&
+                             scene.getObjectByName("ALUEVALINTA_RYHMA") !== null)
+                            ||
+                            (groupDragControls.objects[0].name === "MASTER_SYSTEM" && 
+                             scene.getObjectByName("MASTER_SYSTEM") !== null)
+                        );
 
     if (onkoAlueValittu) {
-        console.log("Aluevalinta aktiivinen, ohitetaan nollaus.");
+        console.log("Aluevalinta tai Master aktiivinen, ohitetaan nollaus.");
         return; 
     }
-
 
     // Siivotaan vanhat pois
     if (dragControls) dragControls.dispose();
     if (groupDragControls) groupDragControls.dispose();
 
+    const muokkaaKaikkia = document.getElementById("liikutaKaikkia").checked;
+
     // 1. Kontrollit seinille
     dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
     
-    // 2. Kontrollit ryhmille
-    groupDragControls = new DragControls(groupDragObjects, activeCamera, renderer.domElement);
-    groupDragControls.transformGroup = true; // Tämä liikuttaa koko ryhmää, ei vain jäsentä
-    
+    // 2. Kontrollit ryhmille (Tarkistetaan, hallitaanko kaikkia vai yksittäisiä ryhmiä)
+    const kohteet = muokkaaKaikkia ? [masterGroup] : groupDragObjects;
+    groupDragControls = new DragControls(kohteet, activeCamera, renderer.domElement);
+    groupDragControls.transformGroup = true;
 
-    // Lisätään tapahtumakuuntelijat molempiin
+    // Lisätään tapahtumakuuntelijat (dragstart, drag, dragend)
     [dragControls, groupDragControls].forEach(ctrl => {
-        ctrl.addEventListener("dragstart", function(event) {
+        ctrl.addEventListener("dragstart", () => {
             controls2D.enabled = false;
             controls3D.enabled = false;
         });
 
-        ctrl.addEventListener("drag", function(event) {
+        ctrl.addEventListener("drag", (event) => {
             event.object.position.y = 0;
-            // Snapping
-
             event.object.rotation.x = 0;
             event.object.rotation.z = 0;
-            
-            event.object.position.x = Math.round(event.object.position.x * 2) / 2;
-            event.object.position.z = Math.round(event.object.position.z * 2) / 2;
+            event.object.position.x = Math.round(event.object.position.x * 8) / 8;
+            event.object.position.z = Math.round(event.object.position.z * 8) / 8;
         });
 
-        ctrl.addEventListener("dragend", function(event) {
+        ctrl.addEventListener("dragend", () => {
             if (activeCamera === camera2d) controls2D.enabled = true;
             else controls3D.enabled = true;
         });
@@ -423,50 +463,6 @@ export function paivitaRaahaus() {
         dragControls.enabled = false;
         groupDragControls.enabled = false;
     }
-
-
-    const muokkaaKaikkiaCheckbox = document.getElementById("liikutaKaikkia");
-
-    
-    if (muokkaaKaikkiaCheckbox) {
-    muokkaaKaikkiaCheckbox.onchange = (event) => {
-        event.stopImmediatePropagation();
-        
-        const siirtelyRadio = document.getElementById("siirtelytila");
-
-        if (event.target.checked) {
-            // Varmistetaan että siirtelytila on päällä radiossa
-            if (siirtelyRadio) siirtelyRadio.checked = true;
-            
-            // jotta ei tulisi bugia kun piirto tilassa painetaan "liikuta kaikkia"
-            paivitaTila();
-
-            // Aktivoidaan master-ryhmä
-            aktivoiMaster(groupDragObjects, groupDragControls);
-            
-            // Pakotetaan kontrollit päälle HETI
-            if (dragControls) dragControls.enabled = true;
-            if (groupDragControls) {
-                groupDragControls.enabled = true;
-                groupDragControls.objects = [masterGroup]; 
-            }
-            
-            if (typeof setDrawing === 'function') setDrawing(false);
-            console.log("Master-liikutus aktivoitu.");
-        } else {
-            // tapahtuu kun rasti otetaan pois
-            deaktivoiMaster(groupDragObjects, groupDragControls);
-            paivitaRaahaus(); 
-            console.log("Master-liikutus poistettu.");
-        }
-    };
-    } else {
-        // ylimmälle if-lauseelle (jos elementtiä ei ole HTML:ssä)
-        console.error("VIRHE: Elementtiä 'muokkaaKaikkia' ei löydy HTML-koodista!");
-    }
-
-
-    console.log(`%c[System] Raahaus päivitetty. Seiniä: ${dragObjects.length}, Ryhmiä: ${groupDragObjects.length}`, "color: #27ae60");
 }
 
 

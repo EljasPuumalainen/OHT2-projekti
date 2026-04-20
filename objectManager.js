@@ -137,3 +137,75 @@ export function lisaaPortaat(leveys, syvyys, korkeus, askelmia, nimi) {
     undoHistory.push({ type: "primitiivi", object: group });
     paivitaRaahaus();
 }
+
+// Lisää hissin sceneen annetuilla mitoilla
+export function lisaaHissi(leveys, syvyys, korkeus, nimi = '') {
+    const group = new THREE.Group();
+
+    leveys = Math.max(0.8, leveys);
+    syvyys = Math.max(0.8, syvyys);
+    korkeus = Math.max(0.1, korkeus);
+
+    // Hissin pohjakappale
+    const geo = new THREE.BoxGeometry(leveys, korkeus, syvyys);
+    const mat = new THREE.MeshStandardMaterial({ color: 0xe6e6e6 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.y = korkeus / 2;
+    mesh.userData.tyyppi = 'hissi';
+    group.add(mesh);
+
+    // Reunaviivat
+    const edges = new THREE.EdgesGeometry(geo);
+    const edgeLines = new THREE.LineSegments(
+        edges,
+        new THREE.LineBasicMaterial({ color: 0x2f55ff })
+    );
+    edgeLines.position.copy(mesh.position);
+    edgeLines.userData.tyyppi = 'hissi_reunat';
+    group.add(edgeLines);
+
+    // Keskelle pelkkä sininen X
+    const y = korkeus + 0.01;
+    const halfW = leveys / 2;
+    const halfD = syvyys / 2;
+
+    // Pieni marginaali reunoihin
+    const margin = Math.min(leveys, syvyys) * 0.18;
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x2f55ff
+    });
+
+    const diag1 = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-halfW + margin, y, -halfD + margin),
+            new THREE.Vector3( halfW - margin, y,  halfD - margin)
+        ]),
+        lineMaterial
+    );
+
+    const diag2 = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(-halfW + margin, y,  halfD - margin),
+            new THREE.Vector3( halfW - margin, y, -halfD + margin)
+        ]),
+        lineMaterial
+    );
+
+    group.add(diag1);
+    group.add(diag2);
+
+    if (nimi) {
+        group.add(luoNimiLabel(nimi, korkeus));
+    }
+
+    group.userData.tyyppi = 'primitiivi';
+    group.userData.alatyyppi = 'hissi';
+    group.userData.nimi = nimi;
+    group.userData.mitat = { leveys, syvyys, korkeus };
+
+    scene.add(group);
+    groupDragObjects.push(group);
+    undoHistory.push({ type: "primitiivi", object: group });
+    paivitaRaahaus();
+}
