@@ -57,6 +57,7 @@ export function lataaPohjakuva(file) {
 
     scene.add(pohjakuvaRyhma);
     lukittu = false;
+    groupDragObjects.push(pohjakuvaRyhma);
 
     // Resetoi koon asettamisen
     const inputL = document.getElementById('inputLeveys');
@@ -139,7 +140,7 @@ function resetKalibrointiMarkers() {
 
 function lisaaKalibrointiMarker(point) {
     const geo = new THREE.SphereGeometry(0.12, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xff2222 });
+    const mat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     const marker = new THREE.Mesh(geo, mat);
     marker.position.set(point.x, 0.25, point.z);
     scene.add(marker);
@@ -153,7 +154,7 @@ function piirraKalibrointiViiva(p1, p2) {
         new THREE.Vector3(p2.x, 0.25, p2.z)
     ];
     const geo = new THREE.BufferGeometry().setFromPoints(points);
-    const mat = new THREE.LineBasicMaterial({ color: 0xff2222 });
+    const mat = new THREE.LineBasicMaterial({ color: 0xff0000 });
     kalibrointiViiva = new THREE.Line(geo, mat);
     scene.add(kalibrointiViiva);
 }
@@ -243,6 +244,13 @@ export function initKalibrointiNapit() {
     const peruuta = document.getElementById('kalibrointiPeruuta');
     const etaisInput = document.getElementById('kalibrointiEtaisyys');
     const sulje = document.getElementById('btnSuljePohjakuva');
+
+    const pohjakuvaPanel = document.getElementById('pohjakuvaKontrollit');
+    if (pohjakuvaPanel) {   
+        pohjakuvaPanel.addEventListener('mousedown', (e) => {
+            e.stopPropagation(); // ← clicks on the panel never reach the canvas
+        });
+    }
 
     if (sulje) {
         sulje.addEventListener('click', () => {

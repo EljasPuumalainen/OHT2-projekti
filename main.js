@@ -195,6 +195,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const hissi = document.getElementById('btnHissi');
     const modalOK = document.getElementById('modalOK');
     const modalPeruuta = document.getElementById('modalPeruuta');
+    const primitiiviModal = document.getElementById('primitiiviModal');
 
     const pohjakuva = document.getElementById('lataaPohjakuvatiedosto');
     const opasiteetti = document.getElementById('sliderOpasiteetti');
@@ -354,6 +355,10 @@ window.addEventListener("DOMContentLoaded", () => {
         document.getElementById('primitiiviModal').style.display = 'none';
     });
 
+    primitiiviModal.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+    })
+
     pohjakuva.addEventListener('change', (e) => {
         if (e.target.files[0]) lataaPohjakuva(e.target.files[0]);
     });
@@ -477,11 +482,14 @@ function animate() {
         const edgeSize = 80;
         const panSpeed = 0.08;
 
-        const dx =
+        const elementUnderMouse = document.elementFromPoint(mouseScreenPos.x, mouseScreenPos.y);
+        const overUI = elementUnderMouse && elementUnderMouse !== renderer.domElement;
+
+        const dx = overUI ? 0 :
             mouseScreenPos.x < edgeSize ? -panSpeed :
             mouseScreenPos.x > window.innerWidth - edgeSize ? panSpeed : 0;
 
-        const dz =
+        const dz = overUI ? 0 :
             mouseScreenPos.y < edgeSize ? -panSpeed :
             mouseScreenPos.y > window.innerHeight - edgeSize ? panSpeed : 0;
 
