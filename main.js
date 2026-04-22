@@ -412,15 +412,23 @@ window.addEventListener("DOMContentLoaded", () => {
 })
 
 export function paivitaRaahaus() {
+    
     const onkoAlueValittu = groupDragControls && 
-                        groupDragControls.objects.length === 1 && 
-                        (
-                            (groupDragControls.objects[0].name === "ALUEVALINTA_RYHMA" &&
-                             scene.getObjectByName("ALUEVALINTA_RYHMA") !== null)
-                            ||
-                            (groupDragControls.objects[0].name === "MASTER_SYSTEM" && 
-                             scene.getObjectByName("MASTER_SYSTEM") !== null)
-                        );
+        groupDragControls.objects.length === 1 && 
+        (
+            (groupDragControls.objects[0].name === "ALUEVALINTA_RYHMA" &&
+            !!scene.getObjectByName("ALUEVALINTA_RYHMA"))
+            ||
+            (groupDragControls.objects[0].name === "MASTER_SYSTEM" && 
+            !!scene.getObjectByName("MASTER_SYSTEM"))
+        );
+
+    if (groupDragControls && 
+        groupDragControls.objects.length === 1 &&
+        groupDragControls.objects[0].name === "ALUEVALINTA_RYHMA" &&
+        !scene.getObjectByName("ALUEVALINTA_RYHMA")) {
+        groupDragControls.objects = groupDragObjects;
+    }
 
     if (onkoAlueValittu) {
         console.log("Aluevalinta tai Master aktiivinen, ohitetaan nollaus.");

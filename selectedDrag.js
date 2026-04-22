@@ -27,9 +27,12 @@ export function aktivoiAlueRaahaus(valitutObjektit, groupDragControls) {
         if (obj && obj.parent) {
             obj.traverse(child => {
                 if (child.isMesh) {
-                    if (!child.userData.originalMaterial) child.userData.originalMaterial = child.material;
+                    // LISÄÄ TÄMÄ — ohita hoverBoxit
+                    if (child.material?.color?.getHex() === 0x00ff00) return;
+                    
+                    child.userData.originalMaterial = child.material;
                     child.material = child.userData.originalMaterial.clone();
-                    child.material.color.setHex(0xa8f4a8); 
+                    child.material.color.setHex(0xa8f4a8);
                 }
             });
             selectionGroup.attach(obj);

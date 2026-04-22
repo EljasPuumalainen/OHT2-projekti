@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { scene, grid, drawingPlane, renderer } from './sceneSetup.js';
 import { groupDragObjects, dragObjects, undoHistory, hoverBox, hoverBoxSeina, hoverBoxPaaty } from './wallManager.js';
 import { paivitaRaahaus } from './main.js';
+import { puraAlueRaahaus } from './selectedDrag.js';
 
 let getActiveCamera = null;
 let selectedObject = null;
@@ -106,10 +107,7 @@ export function setupDeleteEvents(cameraGetter) {
 
         if (!siirtelyRadio || !siirtelyRadio.checked) return;
 
-        //console.log("[Poisto] keydown:", event.key);
-
         if (!selectedObject) {
-            //console.log("[Poisto] Ei valittua objektia");
             return;
         }
 
@@ -119,8 +117,39 @@ export function setupDeleteEvents(cameraGetter) {
         if (event.key === "Delete" || event.key === "Backspace") {
             event.preventDefault();
 
+            // Jos selectedObject on ALUEVALINTA_RYHMA, poista kaikki sen sisältämät seinät
+            if (selectedObject.name === "ALUEVALINTA_RYHMA") {
+                const lapset = [...selectedObject.children];
+                lapset.forEach(obj => {
+                    const indexInGroupDrag = groupDragObjects.indexOf(obj);
+                    const indexInDrag = dragObjects.indexOf(obj);
+
+                    undoHistory.push({
+                        type: "poisto",
+                        object: obj,
+                        parent: scene,
+                        indexInGroupDrag,
+                        indexInDrag
+                    });
+
+                    if (indexInGroupDrag !== -1) groupDragObjects.splice(indexInGroupDrag, 1);
+                    if (indexInDrag !== -1) dragObjects.splice(indexInDrag, 1);
+
+                    scene.remove(obj);
+                });
+
+                scene.remove(selectedObject);
+                selectedObject = null;
+                puraAlueRaahaus(groupDragObjects, null);
+                paivitaRaahaus();
+                return;
+            }
+
             const parent = selectedObject.parent;
             if (!parent) return;
+
+            // Puretaan aluevalinta ennen poistoa jotta paivitaRaahaus ei skippaannu
+            puraAlueRaahaus(groupDragObjects, null);
 
             const indexInGroupDrag = groupDragObjects.indexOf(selectedObject);
             const indexInDrag = dragObjects.indexOf(selectedObject);
@@ -128,12 +157,12 @@ export function setupDeleteEvents(cameraGetter) {
             undoHistory.push({
                 type: "poisto",
                 object: selectedObject,
-                parent: parent,
+                parent: scene,
                 indexInGroupDrag: indexInGroupDrag,
                 indexInDrag: indexInDrag
             });
 
-            parent.remove(selectedObject);
+            scene.remove(selectedObject);
 
             if (selectedObject.userData.tyyppi === 'pohjakuva') {
                 window.dispatchEvent(new CustomEvent('pohjakuvaDeleted'));

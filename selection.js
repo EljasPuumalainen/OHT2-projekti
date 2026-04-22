@@ -122,6 +122,7 @@ export function initSelection(getActiveCamera, getActiveControls, getGroupDragCo
 
         if (valitut.length > 0) {
             console.log("Valittu " + valitut.length + " seinää.");
+            
             aktivoiAlueRaahaus(valitut, getGroupDragControls());
             
         }
