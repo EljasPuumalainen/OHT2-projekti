@@ -34,6 +34,7 @@ export function aktivoiMaster(groupDragObjects, getDragControls) {
         groupDragControls.objects = [masterGroup];
 
         ctrl.addEventListener("drag", (event) => {
+
             event.object.position.y = 0;
             event.object.rotation.x = 0;
             event.object.rotation.z = 0;
