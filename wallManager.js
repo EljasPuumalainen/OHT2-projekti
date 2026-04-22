@@ -32,7 +32,7 @@ window.addEventListener("mousemove", (event) => {
 
 window.addEventListener("mousedown", (event) => {
 
-    if (event.clientX < 200 && event.clientY < 500) return;
+    if (event.clientX < 225 && event.clientY < 625) return;
     if (!isDrawing) return;
 
     const rect = renderer.domElement.getBoundingClientRect();

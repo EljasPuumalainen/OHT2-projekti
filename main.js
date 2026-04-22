@@ -85,17 +85,18 @@ function paivitaTila() {
     const liikutaKaikkiaCheckbox = document.getElementById("liikutaKaikkia");
     
     if (liikutaKaikkiaCheckbox && liikutaKaikkiaCheckbox.checked) {
-        // Aktivoi master-tila
-        aktivoiMaster(groupDragObjects, () => groupDragControls);
+        // Pakotetaan ensin siirtelytilaan
+        if (siirtelyRadio) siirtelyRadio.checked = true;
         
-        // Pakotetaan käyttöliittymä oikeaan tilaan
         setDrawing(false);
         enableBtn();
-    } else {
-        // Poista master-tila
-        deaktivoiMaster(groupDragObjects, () => groupDragControls);
         
-        // Nyt vasta kutsutaan paivitaRaahaus, kun masterGroup on purettu
+        // Päivitetään kontrollit ENSIN, sitten aktivoidaan master
+        paivitaRaahaus();
+        aktivoiMaster(groupDragObjects, () => groupDragControls);
+
+    } else {
+        deaktivoiMaster(groupDragObjects, () => groupDragControls);
         paivitaRaahaus();
     }
 
@@ -460,6 +461,11 @@ export function paivitaRaahaus() {
             event.object.position.y = 0;
             event.object.rotation.x = 0;
             event.object.rotation.z = 0;
+
+            if (event.object.userData.tyyppi === 'pohjakuva') {
+                event.object.rotation.y = event.object.userData.lukittuRotaatio ?? 0;
+            }
+
             event.object.position.x = Math.round(event.object.position.x * 8) / 8;
             event.object.position.z = Math.round(event.object.position.z * 8) / 8;
         });
