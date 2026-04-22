@@ -7,13 +7,17 @@ import { puraAlueRaahaus } from './selectedDrag.js';
 let getActiveCamera = null;
 let selectedObject = null;
 
+export function setSelectedObjectManual(obj) {
+    selectedObject = obj;
+    console.log("[Poisto] selectedObject asetettu manuaalisesti:", selectedObject?.name);
+}
+
 export function setupDeleteEvents(cameraGetter) {
     getActiveCamera = cameraGetter;
 
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    let selectedObject = null;
 
     function isProtectedObject(obj) {
         return (
@@ -106,6 +110,10 @@ export function setupDeleteEvents(cameraGetter) {
         const siirtelyRadio = document.getElementById("siirtelytila");
 
         if (!siirtelyRadio || !siirtelyRadio.checked) return;
+
+        if (!selectedObject) {
+            selectedObject = scene.getObjectByName("ALUEVALINTA_RYHMA");
+        }
 
         if (!selectedObject) {
             return;

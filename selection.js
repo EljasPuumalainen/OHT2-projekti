@@ -3,7 +3,8 @@ import * as THREE from "three"
 import { groupDragObjects } from './wallManager.js';
 import { aktivoiAlueRaahaus, puraAlueRaahaus } from './selectedDrag.js';
 import { paivitaRaahaus } from "./main.js";
-
+import { setSelectedObjectManual } from './deleteObject.js';
+import { scene } from './sceneSetup.js';
 
 
 let isDragging = false;
@@ -124,7 +125,10 @@ export function initSelection(getActiveCamera, getActiveControls, getGroupDragCo
             console.log("Valittu " + valitut.length + " seinää.");
             
             aktivoiAlueRaahaus(valitut, getGroupDragControls());
-            
+            const ryhma = scene.getObjectByName("ALUEVALINTA_RYHMA");
+            if (ryhma) {
+                setSelectedObjectManual(ryhma);
+            }
         }
     });
 }

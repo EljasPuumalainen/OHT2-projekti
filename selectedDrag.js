@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { scene } from './sceneSetup.js';
+import { setSelectedObjectManual } from './deleteObject.js';
 
 // Tilapäinen ryhmä vain aluevalintaa varten
 let selectionGroup = new THREE.Group();
@@ -61,6 +62,8 @@ export function puraAlueRaahaus(kaikkiObjektit, groupDragControls) {
     });
 
     scene.remove(ryhma);
+
+    setSelectedObjectManual(null);
 
     if (groupDragControls && kaikkiObjektit) {
         groupDragControls.objects = kaikkiObjektit;
