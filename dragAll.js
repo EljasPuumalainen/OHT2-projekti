@@ -17,6 +17,7 @@ export function aktivoiMaster(groupDragObjects, getDragControls) {
     for (let i = groupDragObjects.length - 1; i >= 0; i--) {
         const group = groupDragObjects[i];
         if (group && group.parent) {
+            group.rotation.reorder('YXZ');
             masterGroup.attach(group);
             group.traverse(child => {
                 if (child.isMesh) {
@@ -50,6 +51,9 @@ export function deaktivoiMaster(groupDragObjects, getDragControls) {
     const lapset = [...masterGroup.children];
     lapset.forEach(group => {
         group.traverse(child => {
+
+            
+
             if (child.isMesh && child.userData.originalMaterial) {
                 child.material = child.userData.originalMaterial;
             }
