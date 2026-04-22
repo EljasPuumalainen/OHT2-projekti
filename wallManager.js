@@ -287,7 +287,7 @@ window.addEventListener("mousemove", (event) => {
                 const maailmaPiste = intersects[0].point;
                 const paikallinenPiste = ryhma.worldToLocal(maailmaPiste.clone());
                 const zPos = paikallinenPiste.z;
-                const uusiPosz = Math.round(zPos * 2) / 2;
+                const uusiPosz = Math.round(zPos * 4) / 4;
 
                 hoverBox.visible = true;
                 hoverBox.position.z = uusiPosz;
