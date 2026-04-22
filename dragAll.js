@@ -51,9 +51,6 @@ export function deaktivoiMaster(groupDragObjects, getDragControls) {
     const lapset = [...masterGroup.children];
     lapset.forEach(group => {
         group.traverse(child => {
-
-            
-
             if (child.isMesh && child.userData.originalMaterial) {
                 child.material = child.userData.originalMaterial;
             }
