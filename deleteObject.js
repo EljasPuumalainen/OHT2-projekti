@@ -12,6 +12,10 @@ export function setSelectedObjectManual(obj) {
     console.log("[Poisto] selectedObject asetettu manuaalisesti:", selectedObject?.name);
 }
 
+export function getSelectedObject() {
+    return selectedObject;
+}
+
 export function setupDeleteEvents(cameraGetter) {
     getActiveCamera = cameraGetter;
 

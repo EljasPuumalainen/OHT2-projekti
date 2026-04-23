@@ -9,8 +9,6 @@ export const groupDragObjects = [];
 //Undo historia
 export const undoHistory = [];
 
-let aktiivinenValinta = null;
-
 //Piirto toiminnot
 export let isDrawing = false;
 export let currentWallGroup = null;
