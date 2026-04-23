@@ -8,6 +8,7 @@ import { tallennaJSON, lataaJSON } from './filemanager.js';
 import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat, lisaaHissi} from './objectManager.js';
 import { lataaPohjakuva, asetaOpasiteetti, asetaLeveys, asetaKorkeus, toggleLukitus, onkoLukittu, onkoPohjakuva, initImageManager, startKalibrointi, initKalibrointiNapit } from './imageManager.js';
 import { aktivoiMaster, deaktivoiMaster, masterGroup} from './dragAll.js';
+import { initCopyPaste } from './copyPaste.js';
 
 import { setupDeleteEvents } from './deleteObject.js';
 
@@ -66,6 +67,8 @@ setupTurnEvents(() => activeCamera)
 setupTurnOvi(() => activeCamera)
 
 setupDeleteEvents(() => activeCamera)
+
+initCopyPaste(() => groupDragControls);
 
 function disableBtn() {
     document.getElementById("buttonCamera").disabled = true;
