@@ -287,6 +287,7 @@ window.addEventListener("DOMContentLoaded", () => {
     //Logiikka sylintereille ja suorakaiteille
     suorakaide.addEventListener('click', () => {
         modalTyyppi = 'suorakaide';
+        document.getElementById('pNimi').parentElement.style.display = 'block';
         document.getElementById('modalOtsikko').textContent = 'Lisää suorakaide';
         document.getElementById('suorakaideKentat').style.display = 'block';
         document.getElementById('sylinteriKentat').style.display = 'none';
@@ -297,6 +298,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     sylinteri.addEventListener('click', () => {
         modalTyyppi = 'sylinteri';
+        document.getElementById('pNimi').parentElement.style.display = 'block';
         document.getElementById('modalOtsikko').textContent = 'Lisää sylinteri';
         document.getElementById('suorakaideKentat').style.display = 'none';
         document.getElementById('sylinteriKentat').style.display = 'block';
@@ -307,6 +309,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     portaat.addEventListener('click', () => {
         modalTyyppi = 'portaat';
+        document.getElementById('pNimi').value = '';
         document.getElementById('pNimi').parentElement.style.display = 'none';
         document.getElementById('modalOtsikko').textContent = 'Lisää portaat';
         document.getElementById('suorakaideKentat').style.display = 'none';
@@ -318,6 +321,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     hissi.addEventListener('click', () => {
         modalTyyppi = 'hissi';
+        document.getElementById('pNimi').value = '';
         document.getElementById('pNimi').parentElement.style.display = 'none';
         document.getElementById('modalOtsikko').textContent = 'Lisää hissi';
         document.getElementById('suorakaideKentat').style.display = 'none';
