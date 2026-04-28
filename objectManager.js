@@ -74,11 +74,10 @@ export function lisaaSylinteri(halkaisija, korkeus, nimi) {
     paivitaRaahaus();
 }
 
-// Lisää portaat sceneen annetuilla mitoilla ja nimellä
-export function lisaaPortaat(leveys, syvyys, korkeus, askelmia, nimi) {
+// Lisää portaat sceneen annetuilla mitoilla
+export function lisaaPortaat(leveys, syvyys, korkeus, askelmia) {
     const group = new THREE.Group();
 
-    // Varmistetaan järkevät arvot
     askelmia = Math.max(2, Math.floor(askelmia));
     leveys = Math.max(0.2, leveys);
     syvyys = Math.max(0.2, syvyys);
@@ -90,46 +89,22 @@ export function lisaaPortaat(leveys, syvyys, korkeus, askelmia, nimi) {
     for (let i = 0; i < askelmia; i++) {
         const askelmanKokonaisKorkeus = (i + 1) * askelmanKorkeus;
 
-        const geo = new THREE.BoxGeometry(
-            leveys,
-            askelmanKokonaisKorkeus,
-            askelmanSyvyys
-        );
-
-        // Kevyt vuorottelu auttaa 2D-näkymässä erottumaan
+        const geo = new THREE.BoxGeometry(leveys, askelmanKokonaisKorkeus, askelmanSyvyys);
         const vari = i % 2 === 0 ? 0xcfcfcf : 0xb8b8b8;
         const mat = new THREE.MeshStandardMaterial({ color: vari });
-
         const mesh = new THREE.Mesh(geo, mat);
 
-        // Rakennetaan portaat Z-suunnassa eteenpäin
         mesh.position.set(
             0,
             askelmanKokonaisKorkeus / 2,
             -syvyys / 2 + askelmanSyvyys / 2 + i * askelmanSyvyys
         );
-
         mesh.userData.tyyppi = 'porras_askelma';
         group.add(mesh);
-
-        // Reunaviivat tekevät portaista paljon selkeämmät 2D:ssä
-        const edges = new THREE.EdgesGeometry(geo);
-        const line = new THREE.LineSegments(
-            edges,
-            new THREE.LineBasicMaterial({ color: 0x222222 })
-        );
-        line.position.copy(mesh.position);
-        line.userData.tyyppi = 'porras_reuna';
-        group.add(line);
-    }
-
-    if (nimi) {
-        group.add(luoNimiLabel(nimi, korkeus));
     }
 
     group.userData.tyyppi = 'primitiivi';
     group.userData.alatyyppi = 'portaat';
-    group.userData.nimi = nimi;
     group.userData.mitat = { leveys, syvyys, korkeus, askelmia };
 
     scene.add(group);
@@ -139,14 +114,14 @@ export function lisaaPortaat(leveys, syvyys, korkeus, askelmia, nimi) {
 }
 
 // Lisää hissin sceneen annetuilla mitoilla
-export function lisaaHissi(leveys, syvyys, korkeus, nimi = '') {
+export function lisaaHissi(leveys, syvyys, korkeus) {
     const group = new THREE.Group();
 
     leveys = Math.max(0.8, leveys);
     syvyys = Math.max(0.8, syvyys);
     korkeus = Math.max(0.1, korkeus);
 
-    // Hissin pohjakappale
+    // Pohjakappale
     const geo = new THREE.BoxGeometry(leveys, korkeus, syvyys);
     const mat = new THREE.MeshStandardMaterial({ color: 0xe6e6e6 });
     const mesh = new THREE.Mesh(geo, mat);
@@ -154,54 +129,38 @@ export function lisaaHissi(leveys, syvyys, korkeus, nimi = '') {
     mesh.userData.tyyppi = 'hissi';
     group.add(mesh);
 
-    // Reunaviivat
-    const edges = new THREE.EdgesGeometry(geo);
-    const edgeLines = new THREE.LineSegments(
-        edges,
-        new THREE.LineBasicMaterial({ color: 0x2f55ff })
+    // Rasti kahdesta ohuesta palkista (45° kulmassa)
+    const rastiKorkeus = 0.01;
+    const rastiPaksuus = 0.05;
+    const rastiMat = new THREE.MeshStandardMaterial({ color: 0x2f55ff });
+    const marginaali = 0.75;
+
+    // Diagonaali 1: vasemmalta-edestä oikealle-taakse
+    const diag1geo = new THREE.BoxGeometry(
+        Math.sqrt(leveys ** 2 + syvyys ** 2) * marginaali, // halkaisija kulmasta kulmaan
+        rastiKorkeus,
+        rastiPaksuus
     );
-    edgeLines.position.copy(mesh.position);
-    edgeLines.userData.tyyppi = 'hissi_reunat';
-    group.add(edgeLines);
-
-    // Keskelle pelkkä sininen X
-    const y = korkeus + 0.01;
-    const halfW = leveys / 2;
-    const halfD = syvyys / 2;
-
-    // Pieni marginaali reunoihin
-    const margin = Math.min(leveys, syvyys) * 0.18;
-
-    const lineMaterial = new THREE.LineBasicMaterial({
-        color: 0x2f55ff
-    });
-
-    const diag1 = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(-halfW + margin, y, -halfD + margin),
-            new THREE.Vector3( halfW - margin, y,  halfD - margin)
-        ]),
-        lineMaterial
-    );
-
-    const diag2 = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(-halfW + margin, y,  halfD - margin),
-            new THREE.Vector3( halfW - margin, y, -halfD + margin)
-        ]),
-        lineMaterial
-    );
-
+    const diag1 = new THREE.Mesh(diag1geo, rastiMat);
+    diag1.position.y = korkeus + 0.01 / 2;
+    diag1.rotation.y = Math.atan2(syvyys, leveys); // kulma leveys/syvyys-suhteen mukaan
+    diag1.userData.tyyppi = 'hissi_rasti';
     group.add(diag1);
-    group.add(diag2);
 
-    if (nimi) {
-        group.add(luoNimiLabel(nimi, korkeus));
-    }
+    // Diagonaali 2: peilikuva
+    const diag2geo = new THREE.BoxGeometry(
+        Math.sqrt(leveys ** 2 + syvyys ** 2) * marginaali,
+        rastiKorkeus,
+        rastiPaksuus
+    );
+    const diag2 = new THREE.Mesh(diag2geo, rastiMat);
+    diag2.position.y = korkeus + 0.01 / 2;
+    diag2.rotation.y = -Math.atan2(syvyys, leveys);
+    diag2.userData.tyyppi = 'hissi_rasti';
+    group.add(diag2);
 
     group.userData.tyyppi = 'primitiivi';
     group.userData.alatyyppi = 'hissi';
-    group.userData.nimi = nimi;
     group.userData.mitat = { leveys, syvyys, korkeus };
 
     scene.add(group);

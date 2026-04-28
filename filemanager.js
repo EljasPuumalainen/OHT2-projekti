@@ -15,30 +15,24 @@ import { luoNimiLabel } from './objectManager.js';
  */
 
 export function tallennaJSON() {
-    // 1. Otetaan objektit
     const objektit = groupDragObjects.filter(group => {
         return group.children.some(c => c.userData.tyyppi === "seina")
-        || group.userData.tyyppi === "primitiivi";
+            || group.userData.tyyppi === "primitiivi";
     });
 
-    // 2. Tehdään minimalistinen paketti
     const exportData = objektit.map((group) => {
-        // Poistetaan sprite,(eli 3D label) väliaikaisesti ennen toJSON(), koska CanvasTexture ei serialisoidu
         const sprite = group.children.find(c => c.userData.tyyppi === "label");
         if (sprite) group.remove(sprite);
 
         const json = group.toJSON();
 
-        // Lisätään sprite takaisin sceneen
         if (sprite) group.add(sprite);
 
         return { threeData: json };
     });
-    // muutetaan json merkkijonoksi tekstitiedostoa varten
-    const jsonString = JSON.stringify(exportData, null, 2); 
+
+    const jsonString = JSON.stringify(exportData, null, 2);
     downloadJSON(jsonString, "seinat.json");
-    console.log("--------------- SEINÄT TALLENNETTU ---------------");
-    console.log(jsonString);
 }
 
 /**
@@ -106,12 +100,14 @@ export function lataaJSON(event) {
             groupDragObjects.push(ladattuRyhma);
 
             if (ladattuRyhma.userData.tyyppi === "primitiivi") {
-                // Rakennetaan nimiLabel uudelleen userData.nimestä
+                // Kaikki primitiivit (suorakaide, sylinteri, portaat, hissi) latautuvat
+                // suoraan ObjectLoaderilla — ei tarvita uudelleenrakennusta
+                // Label lisätään vain jos nimi on tallessa
                 if (ladattuRyhma.userData.nimi) {
                     const mesh = ladattuRyhma.children.find(c =>
                         c.userData.tyyppi === "suorakaide" || c.userData.tyyppi === "sylinteri"
                     );
-                    const korkeus = mesh?.geometry.parameters.height || 2.5;
+                    const korkeus = mesh?.geometry.parameters.height ?? 2.5;
                     ladattuRyhma.add(luoNimiLabel(ladattuRyhma.userData.nimi, korkeus));
                 }
             } else {
