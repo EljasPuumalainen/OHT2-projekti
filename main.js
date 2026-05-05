@@ -86,6 +86,11 @@ function paivitaTila() {
     const oviRadio = document.getElementById("ovitila");
 
     const liikutaKaikkiaCheckbox = document.getElementById("liikutaKaikkia");
+
+    if (liikutaKaikkiaCheckbox && liikutaKaikkiaCheckbox.checked && !siirtelyRadio.checked) {
+        liikutaKaikkiaCheckbox.checked = false;
+        deaktivoiMaster(groupDragObjects, () => groupDragControls);
+    }
     
     if (liikutaKaikkiaCheckbox && liikutaKaikkiaCheckbox.checked) {
         // Pakotetaan ensin siirtelytilaan
