@@ -374,6 +374,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     pohjakuva.addEventListener('change', (e) => {
         if (e.target.files[0]) lataaPohjakuva(e.target.files[0]);
+        katselu.checked = true;
+        paivitaTila();
     });
 
     opasiteetti.addEventListener('input', (e) => {
