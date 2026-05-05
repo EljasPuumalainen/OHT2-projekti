@@ -31,6 +31,10 @@ export function initSelection(getActiveCamera, getActiveControls, getGroupDragCo
 
         // --- MAALAUS ALKAA (CTRL + Vasen hiiri) ---
         if (e.ctrlKey && e.button === 0) {
+
+            const masterToggle = document.getElementById("liikutaKaikkia");
+            if (masterToggle && masterToggle.checked) return;
+
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;

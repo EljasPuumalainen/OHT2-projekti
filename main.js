@@ -90,7 +90,7 @@ function paivitaTila() {
     if (liikutaKaikkiaCheckbox && liikutaKaikkiaCheckbox.checked) {
         // Pakotetaan ensin siirtelytilaan
         if (siirtelyRadio) siirtelyRadio.checked = true;
-        
+
         setDrawing(false);
         enableBtn();
         
