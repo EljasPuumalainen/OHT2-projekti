@@ -7,6 +7,7 @@ npm install (riippuvuuksien lataus)
 
 npx vite (paikallinen servu päälle)
 
+
 Ohje/kontrollit:
 
 Katselutila:
@@ -21,6 +22,7 @@ Katselutila:
 
 -Molemmissa näkymissä zoomaus toimii rullasta.
 
+
 Siirtelytila: (Mouse1, Mouse2)
 
 -Toimii sekä 2D, että 3D näkymässä.
@@ -31,6 +33,7 @@ Siirtelytila: (Mouse1, Mouse2)
 
 -Kameran liikutus samalla tavalla, kuin katselutilassa, kun hiiri ei osu seinään/objektiin
 
+
 Piirtotila: (Mouse1, Mouse2)
 -Näkymä lukittu 2D.
 
@@ -38,11 +41,13 @@ Piirtotila: (Mouse1, Mouse2)
 
 -Piirto hiiren vasemmalla (mouse1) raahaten.
 
+
 Ovi/Ikkuna: (Mouse1)
 
 -Oven tai ikkunan voi lisätä piirrettyyn seinään viemällä hiiren haluamaansa kohtaan ja klikkaamalla.
 
 -Klikkaamalla jo luodusta ikkunasta/ovesta -> muuttuu takaisin seinäksi.
+
 
 Suorakaide/Sylinteri:
 
@@ -52,13 +57,16 @@ Suorakaide/Sylinteri:
 
 -Nimi ei ole pakollinen.
 
+
 Portaat:
 
 -Portaat napista saa lisättyä haluamansa kokoiset portaat haluamillaan arvoilla.
 
+
 Hissi:
 
 -Hissi napista saa lisättyä haluamansa kokoisen hissin.
+
 
 Pohjakuva:
 
@@ -76,13 +84,16 @@ Pohjakuva:
 
 -Pohjakuvan poistaminen onnistuu DELETE näppäimellä.
 
+
 Liikuta kaikkia:
 
 -Liikuta kaikkia nappi aktivoi kaikki luodut objektit, jonka jälkeen niitä kaikkia voi raahata.
 
+
 Delete: (DELETE)
 
 -Objektien poisto toimii klikkaamalla tai valitsemalla objektin ja painamalla DELETE näppäintä.
+
 
 Valintatyökalu: (CTRL + Mouse1)
 
@@ -90,17 +101,20 @@ Valintatyökalu: (CTRL + Mouse1)
 
 -Työkalulla voi valita haluamansa objektin ja siirrellä niitä tai poistaa ne DELETE näppäimellä.
 
+
 Undo: (CTRL + Z)
 
 -UNDO toiminto toimii näppäin yhdistelmällä CTRL + Z.
 
 -Piirto- ikkuna/ovitilassa myös kumoanäppäin oikeassa yläkulmassa.
 
+
 Copy/Paste: (CTRL + C, CTRL + V)
 
 -Valitun objektin voi kopioida näppäinyhdistemällä CTRL + C ja liittää CTRL + V.
 
 -Toimii myös jos useampi objekti on valittuna.
+
 
 Lataa/Tallenna: (Vasen yläkulma)
 
