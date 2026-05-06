@@ -45,6 +45,9 @@ export function setupDeleteEvents(cameraGetter) {
     console.log("[Poisto] setupDeleteEvents alustettu");
 
     window.addEventListener("mousedown", function(event) {
+
+        if (event.button !== 0) return;
+
         console.log("[Poisto] mousedown havaittu", {
             button: event.button
         });

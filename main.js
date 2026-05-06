@@ -16,6 +16,18 @@ import { initSelection } from './selection.js';
 
 let activeCamera = camera3d;
 
+window.addEventListener('mousedown', (e) => {
+    if (e.button === 2) { 
+        const piirtoPaalla = document.getElementById("piirtotila")?.checked;
+
+        if (piirtoPaalla) {
+            return; 
+        } else {
+            e.stopPropagation();
+        }
+    }
+}, true);
+
 //Kameran vaihto nappulan toiminto
 buttonCamera.addEventListener("click", () => {
     if (activeCamera === camera3d) {
@@ -453,11 +465,13 @@ export function paivitaRaahaus() {
 
     // 1. Kontrollit seinille
     dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
+    dragControls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE };
     
     // 2. Kontrollit ryhmille (Tarkistetaan, hallitaanko kaikkia vai yksittäisiä ryhmiä)
     const kohteet = muokkaaKaikkia ? [masterGroup] : groupDragObjects;
     groupDragControls = new DragControls(kohteet, activeCamera, renderer.domElement);
     groupDragControls.transformGroup = true;
+    groupDragControls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE };
 
     // Lisätään tapahtumakuuntelijat (dragstart, drag, dragend)
     [dragControls, groupDragControls].forEach(ctrl => {
