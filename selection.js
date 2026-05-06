@@ -19,6 +19,9 @@ document.body.appendChild(selectionBox);
 export function initSelection(getActiveCamera, getActiveControls, getGroupDragControls) {
     
     window.addEventListener('mousedown', (e) => {
+
+        if (e.button !== 0) return;
+
         const tila = document.querySelector('input[name="tila"]:checked')?.value;
         const camera = getActiveCamera();
         const is2D = camera instanceof THREE.OrthographicCamera; 
@@ -30,7 +33,7 @@ export function initSelection(getActiveCamera, getActiveControls, getGroupDragCo
         clickStartY = e.clientY;
 
         // --- MAALAUS ALKAA (CTRL + Vasen hiiri) ---
-        if (e.ctrlKey && e.button === 0) {
+        if (e.ctrlKey) {
 
             const masterToggle = document.getElementById("liikutaKaikkia");
             if (masterToggle && masterToggle.checked) return;

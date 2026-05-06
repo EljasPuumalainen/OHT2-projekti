@@ -356,6 +356,10 @@ window.addEventListener("mousemove", (event) => {
         } else {
             if (hoverMaterial) hoverMaterial.uniforms.uHoverActive.value = false;
         }
+    } else {
+        if (hoverMaterial) {
+            hoverMaterial.uniforms.uHoverActive.value = false;
+        }
     }
 });
 
@@ -617,6 +621,10 @@ export function setupTurnEvents(getCamera) {
     const mouse = new THREE.Vector2();
 
     window.addEventListener("mousedown", function(event) {
+
+        console.log('=== TURN mousedown ===', 'button:', event.button,
+        'controls2D.enabled:', controls2D.enabled,
+        'controls3D.enabled:', controls3D.enabled);
         const siirtelyRadio = document.getElementById("siirtelytila");
 
         if (!siirtelyRadio || !siirtelyRadio.checked)
@@ -676,6 +684,10 @@ export function setupTurnEvents(getCamera) {
     })
 
     window.addEventListener("mouseup", function(event) {
+
+        console.log('=== TURN mouseup ===', 'button:', event.button,
+        'isRotating:', isRotating,
+        'controls2D.enabled:', controls2D.enabled);
         if (event.button == 2 && isRotating) {
             const step = 5 * (Math.PI / 180);
             if (selectedObject) {
@@ -684,9 +696,11 @@ export function setupTurnEvents(getCamera) {
             }
 
             isRotating = false;
+            selectedObject = null;
+
             controls3D.enabled = true;
             controls2D.enablePan = true;
-            selectedObject = null;
+            controls2D.enabled = true;
         }
     })
 }
