@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid } from './sceneSetup.js';
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, gridMaterial, hoverMaterial } from './sceneSetup.js';
 import { paivitaRaahaus, dragControls, groupDragControls } from './main.js';
 
 
@@ -304,8 +304,8 @@ window.addEventListener("mousemove", (event) => {
         }
     }
 
-    // Päädyn korostus — tämä on NYT lohkon ulkopuolella, toimii piirtotilassa
-    if (piirtoTilaPaalla && !currentWallGroup) {
+    // Päädyn korostus, toimii piirtotilassa
+    if (piirtoTilaPaalla) {
         const rect = renderer.domElement.getBoundingClientRect();
         const mouse = new THREE.Vector2(
             ((event.clientX - rect.left) / rect.width) * 2 - 1,
@@ -340,6 +340,21 @@ window.addEventListener("mousemove", (event) => {
                     hoverBoxPaaty.rotation.copy(topRyhma.rotation);
                 }
             }
+        }
+
+        const taso = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const kohta = new THREE.Vector3();
+        raycaster.ray.intersectPlane(taso, kohta);
+
+        if (kohta) {
+            const gridSize = hoverMaterial.uniforms.uGridSize.value;
+            hoverMaterial.uniforms.uHoverPos.value.set(
+                Math.floor(kohta.x / gridSize),
+                Math.floor(kohta.z / gridSize)
+            );
+            hoverMaterial.uniforms.uHoverActive.value = true;
+        } else {
+            if (hoverMaterial) hoverMaterial.uniforms.uHoverActive.value = false;
         }
     }
 });

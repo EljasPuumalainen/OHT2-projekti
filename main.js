@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { DragControls } from 'three/addons/controls/DragControls.js';
 
-import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid } from './sceneSetup.js';
+import { scene, renderer, camera3d, camera2d, controls3D, controls2D, drawingPlane, grid, hoverMaterial } from './sceneSetup.js';
 import { setupTurnEvents, groupDragObjects, dragObjects, setDrawing, currentWallGroup, initWallManager, setupTurnOvi, undoHistory, isDrawing, mouseScreenPos } from './wallManager.js';
 import { tallennaJSON, lataaJSON } from './filemanager.js';
 import { lisaaSuorakaide, lisaaSylinteri, lisaaPortaat, lisaaHissi} from './objectManager.js';
@@ -79,6 +79,7 @@ function enableBtn() {
 }
 
 function paivitaTila() {
+
     const siirtelyRadio = document.getElementById("siirtelytila");
     const katseluRadio = document.getElementById("katselutila");
     const piirtoRadio = document.getElementById("piirtotila");
@@ -110,26 +111,19 @@ function paivitaTila() {
 
 
     if (siirtelyRadio.checked) {
-        dragControls.enabled = true;
-        if (groupDragControls) groupDragControls.enabled = true;
-        setDrawing(false)
+        setDrawing(false);
         enableBtn();
 
-        if (activeCamera === camera2d) {
-            controls2D.enabled = true;
-            controls3D.enabled = false;
-        } else {
-            controls2D.enabled = false;
-            controls3D.enabled = true;
-        }
-
-        if (dragControls) {
-                dragControls.dispose();
-            }
-            
-            dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
-            paivitaRaahaus();
+    if (activeCamera === camera2d) {
+        controls2D.enabled = true;
+        controls3D.enabled = false;
+    } else {
+        controls2D.enabled = false;
+        controls3D.enabled = true;
     }
+
+    paivitaRaahaus();
+}
 
     if (katseluRadio.checked) {
         dragControls.enabled = false;
@@ -426,6 +420,7 @@ window.addEventListener("DOMContentLoaded", () => {
     paivitaTila();
 })
 
+
 export function paivitaRaahaus() {
     
     const onkoAlueValittu = groupDragControls && 
@@ -488,6 +483,11 @@ export function paivitaRaahaus() {
             if (activeCamera === camera2d) controls2D.enabled = true;
             else controls3D.enabled = true;
         });
+
+        ctrl.addEventListener("dragmiss", () => {
+            if (activeCamera === camera2d) controls2D.enabled = true;
+            else controls3D.enabled = true;
+        });
     });
 
     // Tarkistetaan onko siirtelytila päällä
@@ -497,8 +497,6 @@ export function paivitaRaahaus() {
         groupDragControls.enabled = false;
     }
 }
-
-
 
 function animate() {
     requestAnimationFrame(animate);
