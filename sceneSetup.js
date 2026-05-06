@@ -51,12 +51,84 @@ export const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 10, 7.5);
 scene.add(directionalLight);
 
-//100 x 100 m grid 1 ruutu = 0.5 metri
-export const grid = new THREE.GridHelper(100, 200, 0x666666, 0x666666);
-scene.add( grid );
+export const gridMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+        uGridSize: { value: 0.25 },
+        uColor: { value: new THREE.Color(0xbbbbbb) },
+        uLineWidth: { value: 0.01 },
+    },
+    vertexShader: `
+        varying vec3 vWorldPos;
+        void main() {
+            vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform float uGridSize;
+        uniform vec3 uColor;
+        uniform float uLineWidth;
+        varying vec3 vWorldPos;
+        void main() {
+            vec2 grid = abs(fract(vWorldPos.xz / uGridSize - 0.5) - 0.5) / fwidth(vWorldPos.xz / uGridSize);
+            float line = min(grid.x, grid.y);
+            float alpha = 1.0 - smoothstep(0.0, 1.5, line);
+            gl_FragColor = vec4(uColor, alpha);
+        }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide
+});
 
-// rendataan päägridit eka, sitten vasta kuva
-grid.renderOrder = 0;
+export const hoverMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+        uGridSize: { value: 0.25 },
+        uHoverPos: { value: new THREE.Vector2(-9999, -9999) },
+        uHoverActive: { value: false }
+    },
+    vertexShader: `
+        varying vec3 vWorldPos;
+        void main() {
+            vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform float uGridSize;
+        uniform vec2 uHoverPos;
+        uniform bool uHoverActive;
+        varying vec3 vWorldPos;
+        void main() {
+            if (!uHoverActive) discard;
+            vec2 ruutu = floor(vWorldPos.xz / uGridSize);
+            if (ruutu.x == uHoverPos.x && ruutu.y == uHoverPos.y) {
+                gl_FragColor = vec4(0.0, 1.0, 0.0, 0.5);
+            } else {
+                discard;
+            }
+        }
+    `,
+    transparent: true,
+    depthTest: false,
+    side: THREE.DoubleSide
+});
+
+export const grid = new THREE.Mesh(
+    new THREE.PlaneGeometry(100, 100),
+    gridMaterial
+);
+grid.rotation.x = -Math.PI / 2;
+scene.add(grid);
+
+export const hoverMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(100, 100),
+    hoverMaterial
+);
+hoverMesh.rotation.x = -Math.PI / 2;
+hoverMesh.position.y = 0.01;
+hoverMesh.renderOrder = 999;
+scene.add(hoverMesh);
+
 
 export const buttonCamera = document.getElementById("buttonCamera");
 
