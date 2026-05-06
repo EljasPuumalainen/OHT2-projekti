@@ -42,12 +42,13 @@ Piirtotila: (Mouse1, Mouse2)
 -Piirto hiiren vasemmalla (mouse1) raahaten.
 
 
-Ovi/Ikkuna: (Mouse1)
+Ovi/Ikkuna: (Mouse1, Mouse2)
 
 -Oven tai ikkunan voi lisätä piirrettyyn seinään viemällä hiiren haluamaansa kohtaan ja klikkaamalla.
 
 -Klikkaamalla jo luodusta ikkunasta/ovesta -> muuttuu takaisin seinäksi.
 
+-Oven kätisyyttä saa muutettua klikkaamalla ovesta hiiren oikealla (mouse2)
 
 Suorakaide/Sylinteri:
 
