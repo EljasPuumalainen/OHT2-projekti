@@ -16,17 +16,30 @@ import { initSelection } from './selection.js';
 
 let activeCamera = camera3d;
 
-window.addEventListener('mousedown', (e) => {
-    if (e.button === 2) { 
-        const piirtoPaalla = document.getElementById("piirtotila")?.checked;
+function resetKontrollit() {
+    // 1. Pysäytetään kaikki liikkeet
+    controls3D.enabled = false;
+    controls2D.enabled = false;
 
-        if (piirtoPaalla) {
-            return; 
-        } else {
-            e.stopPropagation();
-        }
+    // 2. Simuloidaan hiiren nosto OrbitControlsille, jotta se vapauttaa "otteen"
+    const event = new MouseEvent('mouseup', {
+        button: 2, // Oikea nappi
+        bubbles: true
+    });
+    renderer.domElement.dispatchEvent(event);
+
+    // 3. Palautetaan oikea tila
+    const piirto = document.getElementById("piirtotila").checked;
+    if (piirto) {
+        controls2D.enabled = true;
+    } else {
+        controls3D.enabled = true;
+        controls2D.enabled = true;
     }
-}, true);
+    
+    // 4. Pakota fokus takaisin
+    renderer.domElement.focus();
+}
 
 //Kameran vaihto nappulan toiminto
 buttonCamera.addEventListener("click", () => {
@@ -126,13 +139,13 @@ function paivitaTila() {
         setDrawing(false);
         enableBtn();
 
-    if (activeCamera === camera2d) {
-        controls2D.enabled = true;
-        controls3D.enabled = false;
-    } else {
-        controls2D.enabled = false;
-        controls3D.enabled = true;
-    }
+        if (activeCamera === camera2d) {
+            controls2D.enabled = true;
+            controls3D.enabled = false;
+        } else {
+            controls2D.enabled = false;
+            controls3D.enabled = true;
+        }
 
     paivitaRaahaus();
 }
@@ -465,13 +478,11 @@ export function paivitaRaahaus() {
 
     // 1. Kontrollit seinille
     dragControls = new DragControls(dragObjects, activeCamera, renderer.domElement);
-    dragControls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE };
     
     // 2. Kontrollit ryhmille (Tarkistetaan, hallitaanko kaikkia vai yksittäisiä ryhmiä)
     const kohteet = muokkaaKaikkia ? [masterGroup] : groupDragObjects;
     groupDragControls = new DragControls(kohteet, activeCamera, renderer.domElement);
     groupDragControls.transformGroup = true;
-    groupDragControls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE };
 
     // Lisätään tapahtumakuuntelijat (dragstart, drag, dragend)
     [dragControls, groupDragControls].forEach(ctrl => {
