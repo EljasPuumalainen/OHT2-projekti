@@ -622,9 +622,7 @@ export function setupTurnEvents(getCamera) {
 
     window.addEventListener("mousedown", function(event) {
 
-        console.log('=== TURN mousedown ===', 'button:', event.button,
-        'controls2D.enabled:', controls2D.enabled,
-        'controls3D.enabled:', controls3D.enabled);
+
         const siirtelyRadio = document.getElementById("siirtelytila");
 
         if (!siirtelyRadio || !siirtelyRadio.checked)
@@ -685,9 +683,6 @@ export function setupTurnEvents(getCamera) {
 
     window.addEventListener("mouseup", function(event) {
 
-        console.log('=== TURN mouseup ===', 'button:', event.button,
-        'isRotating:', isRotating,
-        'controls2D.enabled:', controls2D.enabled);
         if (event.button == 2 && isRotating) {
             const step = 5 * (Math.PI / 180);
             if (selectedObject) {
