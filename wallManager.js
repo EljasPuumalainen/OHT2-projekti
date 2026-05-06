@@ -613,89 +613,87 @@ export function setupTurnOvi(getCamera) {
     })
 }
 
-export function setupTurnEvents(getCamera) {
+export function setupTurnEvents(getActiveCamera) {
     let isRotating = false;
     let selectedObject = null;
-    let currentRotationY = 0;
+    let startRotationY = 0;
+    let startMouseX = 0;
+    
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
 
-    window.addEventListener("mousedown", function(event) {
-
-
+    // Käytetään capture-vaihetta (true), jotta napataan event ennen OrbitControlsia
+    window.addEventListener("mousedown", (event) => {
         const siirtelyRadio = document.getElementById("siirtelytila");
+        if (!siirtelyRadio?.checked || event.button !== 2) return;
 
-        if (!siirtelyRadio || !siirtelyRadio.checked)
-            return;
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        const camera = getActiveCamera();
+        if (camera) raycaster.setFromCamera(mouse, camera);
+
+        const intersects = raycaster.intersectObjects(scene.children, true);
         
-        if (event.button == 2) {
+        let wallFound = null;
+        if (intersects.length > 0) {
+            let obj = intersects[0].object;
+            if (obj === grid || obj === drawingPlane) return;
 
-            //Laskee hiiren sijainnin
-            const rect = renderer.domElement.getBoundingClientRect();
-
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-            //Päivitetään raycaster kameran ja hiiren mukaan
-            if (getActiveCamera) {
-                raycaster.setFromCamera(mouse, getActiveCamera());
+            let topObject = obj;
+            while (topObject.parent && topObject.parent !== scene) {
+                topObject = topObject.parent;
             }
-
-            //Tarkistus osuuko säde johonkin objektiin
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            if (intersects.length > 0) {
-                let hitObject = intersects[0].object;
-
-                if (hitObject === grid || hitObject === drawingPlane)
-                    return
-                // Jos seinä kuuluu ryhmään, valitaan koko ryhmä käännettäväksi
-                let topObject = hitObject;
-                while (topObject.parent && topObject.parent !== scene) {
-                    topObject = topObject.parent;
-                }
-
-                if (siirtelyRadio.checked) {
-
-                    if (topObject.userData.tyyppi === 'pohjakuva') return;
-
-                    selectedObject = topObject;
-                    currentRotationY = selectedObject.rotation.y;
-                    isRotating = true;
-                    controls3D.enabled = false;
-                    controls2D.enablePan = false;
-                }
+            
+            if (topObject.userData.tyyppi !== 'pohjakuva') {
+                wallFound = topObject;
             }
         }
-    })
 
-    window.addEventListener("mousemove", function(event) {
-        const siirtelyRadio = document.getElementById("siirtelytila");
-        if (!siirtelyRadio || !siirtelyRadio.checked)
-            return;
+        if (wallFound) {
+            // TÄMÄ ON TÄRKEÄ: Estää OrbitControlsia reagoimasta tähän klikkaukseen
+            event.stopImmediatePropagation();
+            
+            selectedObject = wallFound;
+            startRotationY = selectedObject.rotation.y;
+            startMouseX = event.clientX; 
+            isRotating = true;
+        }
+    }, true); // 'true' tarkoittaa capture-vaihetta
 
+    window.addEventListener("mousemove", (event) => {
         if (isRotating && selectedObject) {
-            currentRotationY += event.movementX * 0.005; // <-- päivitetään muuttujaa
-            selectedObject.rotation.y = currentRotationY; // <-- asetetaan suoraan
-            selectedObject.rotation.x = 0;
-            selectedObject.rotation.z = 0;
+            // Estetään kameran panorointi/liike kääntämisen aikana
+            event.stopImmediatePropagation();
+
+            const deltaX = event.clientX - startMouseX;
+            // 2D-kamerassa (Orthographic) hiiren liike voi tuntua hitaammalta, 
+            // voit säätää tätä kerrointa:
+            const herkkyys = 0.005; 
+            
+            selectedObject.rotation.y = startRotationY + (deltaX * herkkyys);
         }
-    })
+    }, true);
 
-    window.addEventListener("mouseup", function(event) {
+    window.addEventListener("mouseup", (event) => {
+        if (isRotating) {
+            // Estetään OrbitControlsia tekemästä loppuliikettä
+            event.stopImmediatePropagation();
 
-        if (event.button == 2 && isRotating) {
             const step = 5 * (Math.PI / 180);
             if (selectedObject) {
-                currentRotationY = Math.round(currentRotationY / step) * step; // <-- pyöristetään muuttuja
-                selectedObject.rotation.y = currentRotationY;
+                selectedObject.rotation.y = Math.round(selectedObject.rotation.y / step) * step;
             }
-
+            
             isRotating = false;
             selectedObject = null;
-
-            controls3D.enabled = true;
-            controls2D.enablePan = true;
-            controls2D.enabled = true;
         }
-    })
+    }, true);
+
+    // Estetään oikean napin valikko
+    window.addEventListener("contextmenu", (e) => {
+        const siirtelyRadio = document.getElementById("siirtelytila");
+        if (siirtelyRadio?.checked) e.preventDefault();
+    }, false);
 }

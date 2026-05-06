@@ -16,31 +16,6 @@ import { initSelection } from './selection.js';
 
 let activeCamera = camera3d;
 
-function resetKontrollit() {
-    // 1. Pysäytetään kaikki liikkeet
-    controls3D.enabled = false;
-    controls2D.enabled = false;
-
-    // 2. Simuloidaan hiiren nosto OrbitControlsille, jotta se vapauttaa "otteen"
-    const event = new MouseEvent('mouseup', {
-        button: 2, // Oikea nappi
-        bubbles: true
-    });
-    renderer.domElement.dispatchEvent(event);
-
-    // 3. Palautetaan oikea tila
-    const piirto = document.getElementById("piirtotila").checked;
-    if (piirto) {
-        controls2D.enabled = true;
-    } else {
-        controls3D.enabled = true;
-        controls2D.enabled = true;
-    }
-    
-    // 4. Pakota fokus takaisin
-    renderer.domElement.focus();
-}
-
 //Kameran vaihto nappulan toiminto
 buttonCamera.addEventListener("click", () => {
     if (activeCamera === camera3d) {
