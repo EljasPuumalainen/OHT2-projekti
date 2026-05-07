@@ -534,83 +534,70 @@ export function lisaaOvi(kohdeRyhma, zPos) {
     }
 }
 
-export function setupTurnOvi(getCamera) {
+export function setupTurnOvi(getActiveCamera) {
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     
     window.addEventListener("mousedown", function(event) {
-        const oviRadio = this.document.getElementById("ovitila");
+        const oviRadio = document.getElementById("ovitila"); // Korjattu: this.document → document
 
-        if (!oviRadio || !oviRadio.checked)
-            return;
+        if (!oviRadio || !oviRadio.checked) return;
+        if (event.button !== 2) return;
 
-        if (event.button == 2) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-            //Laskee hiiren sijainnin
-            const rect = renderer.domElement.getBoundingClientRect();
+        if (getActiveCamera) {
+            raycaster.setFromCamera(mouse, getActiveCamera());
+        }
 
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        // Korjattu: käytetään groupDragObjects:n lapsia, ei scene.children
+        const allParts = [];
+        groupDragObjects.forEach(g => allParts.push(...g.children));
+        
+        const intersects = raycaster.intersectObjects(allParts, true);
+        
+        if (intersects.length > 0) {
+            let tarkistettava = intersects[0].object;
+            let oviElementti = null;
 
-            //Päivitetään raycaster kameran ja hiiren mukaan
-            if (getActiveCamera) {
-                raycaster.setFromCamera(mouse, getActiveCamera());
+            while (tarkistettava && tarkistettava !== scene) {
+                if (tarkistettava.userData?.tyyppi === "ovi") {
+                    oviElementti = tarkistettava;
+                    break;
+                }
+                tarkistettava = tarkistettava.parent;
             }
 
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            if (intersects.length > 0) {
-                let hitObject = intersects[0].object;
-
-                // Etsitään klikatusta objektista tai sen vanhemmista se, jolla on tyyppi "ovi"
-                let oviElementti = null;
-                let tarkistettava = hitObject;
-                
-                // "Kiivetään" ylöspäin vain osumasta, kunnes löytyy ovi tai tullaan sceneen asti
-                while (tarkistettava && tarkistettava !== scene) {
-                    if (tarkistettava.userData && tarkistettava.userData.tyyppi === "ovi") {
-                        oviElementti = tarkistettava;
-                        break;
-                    }
-                    tarkistettava = tarkistettava.parent;
+            if (oviElementti) {
+                if (oviElementti.userData.asento === undefined) {
+                    oviElementti.userData.asento = 0;
                 }
 
-                
+                oviElementti.userData.asento = (oviElementti.userData.asento + 1) % 4;
 
-
-                if (oviElementti) {
-
-                    if (oviElementti.userData.asento === undefined) {
-                        oviElementti.userData.asento = 0;
-                    }
-
-                    oviElementti.userData.asento = (oviElementti.userData.asento + 1) % 4;
-
-                    switch (oviElementti.userData.asento) {
-                        case 0:
-                            // Perusasento (Vasen, Puoli A)
-                            oviElementti.rotation.y = 0;
-                            oviElementti.scale.z = 1;
-                            break;
-                        case 1:
-                            // Kätisyyden vaihto (Vasen, Puoli B)
-                            oviElementti.rotation.y = 0;
-                            oviElementti.scale.z = -1;
-                            break;
-                        case 2:
-                            // Puolen vaihto (Oikea, Puoli B)
-                            oviElementti.rotation.y = Math.PI; 
-                            oviElementti.scale.z = -1;
-                            break;
-                        case 3:
-                            // Kätisyyden vaihto (Oikea), Puoli A)
-                            oviElementti.rotation.y = Math.PI;
-                            oviElementti.scale.z = 1;
-                            break;
-                    }
+                switch (oviElementti.userData.asento) {
+                    case 0:
+                        oviElementti.rotation.y = 0;
+                        oviElementti.scale.z = 1;
+                        break;
+                    case 1:
+                        oviElementti.rotation.y = 0;
+                        oviElementti.scale.z = -1;
+                        break;
+                    case 2:
+                        oviElementti.rotation.y = Math.PI;
+                        oviElementti.scale.z = -1;
+                        break;
+                    case 3:
+                        oviElementti.rotation.y = Math.PI;
+                        oviElementti.scale.z = 1;
+                        break;
                 }
             }
         }
-    })
+    });
 }
 
 export function setupTurnEvents(getActiveCamera) {
